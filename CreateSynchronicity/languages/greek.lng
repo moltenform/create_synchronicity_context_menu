@@ -1,4 +1,3 @@
-﻿# Create Synchronicity Greek language file.
 # Translation by Stathis Grigoriadis AlphaIT S.A. www.alphait.gr, Sifis
 # Tag outdated strings with "->". For example, write "->ID=Translation" if the string ID needs to be retranslated from English.
 #
@@ -114,7 +113,7 @@ UPDATE_ERROR_TITLE=Σφάλμα Δικτύου!
 UPDATE_MSG=Μια νέα έκδοση του Create Synchronicity διατίθεται!\nΕγκατεστημένη έκδοση: {0}\nΤρέχουσα έκδοση: {1}\nΈξοδος από το Create Synchronicity και μετάβαση στην σελίδα λήψης;
 UPDATE_TITLE=Νέα έκδοση είναι διαθέσιμη!
 UPDATES=Έλεγχος για ενημερώσεις κατά την εκκίνηση (απαιτεί σύνδεση στο Internet)
-VERSION_TEXT=Version %version% (\Αναζήτηση για ενημερώσεις /)
+VERSION_TEXT=Version {0} (\Αναζήτηση για ενημερώσεις /)
 VIEW_LOG=Προβολή αρχείου καταγραφής
 WAITING=Αναμονή ...
 WARNING=Προειδοποίηση
@@ -160,7 +159,7 @@ GROUP=Ομάδα
 COMPARE_SIZE=Σύγκριση μεγέθους αρχείου
 MORE=Περισσότερα (προχωρημένοι χρήστες μόνο)
 NO_PROFILES=Δεν έχετε κανένα προφίλ. Κάντε κλικ στο "{0}" για να δημιουργήσετε ένα.
-->WAKEUP_FAILED=
-->POSTSYNC_FAILED=
-->LATEST=
-->POST_SYNC=
+POST_SYNC=Εκτέλεση μετενέργειας: "{0}"
+WAKEUP_FAILED=Αδυναμία εκτέλεσης σεναρίου αφύπνισης
+POSTSYNC_FAILED=Αδυναμία εκτέλεσης σεναρίου μετενέργειας
+LATEST=Μετάβαση στο πιο πρόσφατο

@@ -1,5 +1,4 @@
-﻿# Create Synchronicity Turkish language file
-# Translation by muska
+# Translation by muska, hakova
 # Tag outdated strings with "->". For example, write "->ID=Translation" if the string ID needs to be retranslated from English.
 #
 # SCH_WAITING should be less than 64 chars long, including profile name and date.
@@ -108,7 +107,7 @@ TIME_OFFSET=Zaman Farkı:
 TO=Hedef:
 TWOWAYS_INCREMENTAL=İki Yönlü Artımlı
 TWOWAYS_INCREMENTAL_TAG={0} yöntemi hiçbir dosyayı silmeden varolan tüm dosyaları seçilen iki dizin arasında iki yönlü olarak kopyalar.\nYeni ve üzerinde değişiklik yapılmış dosyalar karşılıklı olarak kopyalanır, hiçbir dosya silinmez.
-TYPE=
+TYPE=Tür
 UPDATE_ERROR="http://synchronicity.sourceforge.net" adresine ulaşılamıyor. Otomatik Güncelleme seçeneğini "Hakkında" bölümünden kapatabilirsiniz.
 UPDATE_ERROR_TITLE=Ağ Hatası!
 UPDATE_MSG=Create Synchronicity Uygulamasının Yeni Sürümü Hazır !\nYüklü Sürüm: {0}\nGüncel Sürüm: {1}\nUygulamadan çıkıp Web sayfasını ziyaret etmek ister misiniz? 
@@ -160,7 +159,7 @@ GROUP=Grup
 COMPARE_SIZE=Dosya boyutlarını karşılaştır
 MORE=Daha Fazlası (sadece deneyimli kullanıcılar)
 NO_PROFILES=Profiliniz yok. "{0}"'ı tıklayarak yeni bir profil oluşturun.
-->WAKEUP_FAILED=
-->POSTSYNC_FAILED=
-->LATEST=
-->POST_SYNC=
+POST_SYNC=Eşzamanlama-sonrası eylemler başlatılıyor: "{0}"
+WAKEUP_FAILED=Uyandırma betiği çalıştırılamıyor
+POSTSYNC_FAILED=Eşzamanlama-sonrası betiği çalıştırılamıyor
+LATEST=En sonuncuya git
