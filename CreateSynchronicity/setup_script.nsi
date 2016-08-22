@@ -11,6 +11,7 @@
 
 !define 		COMPANY		"Create Software"
 !define 		PRODUCTNAME	"Create Synchronicity"
+!define			BINARYNAME  "${PRODUCTNAME}.exe"
 
 !define 		REGPATH		"Software\${COMPANY}"
 !define 		SUBREGPATH	"${REGPATH}\${PRODUCTNAME}"
@@ -39,6 +40,9 @@ Var StartMenuFolder
 !insertmacro MUI_PAGE_STARTMENU AppStartMenu $StartMenuFolder
 
 !insertmacro MUI_PAGE_INSTFILES
+
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${BINARYNAME}"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ${PRODUCTNAME} now"
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
@@ -67,7 +71,7 @@ Var StartMenuFolder
 
 !macro ExitIfRunning
 	Beginning:
-		FindProcDLL::FindProc "Create Synchronicity.exe"
+		FindProcDLL::FindProc "${BINARYNAME}"
 		IntCmp $R0 0 OkCase
 			MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION "Create Synchronicity is running. Please close it before continuing." IDABORT AbortCase IDRETRY RetryCase
 				Goto OkCase
@@ -94,7 +98,7 @@ FunctionEnd
 Section "Installer Section" InstallSection
 	SetOutPath $INSTDIR
 
-	File "bin\Release\Create Synchronicity.exe"
+	File "bin\Release\${BINARYNAME}"
 	File "bin\Release\Release notes.txt"
 	File "bin\Release\COPYING"
 
@@ -113,7 +117,7 @@ Section "Installer Section" InstallSection
 SectionEnd
 
 Section "Uninstall"
-	Delete "$INSTDIR\Create Synchronicity.exe"
+	Delete "$INSTDIR\${BINARYNAME}"
 	Delete "$INSTDIR\Release notes.txt"
 	Delete "$INSTDIR\COPYING"
 	Delete "$INSTDIR\Uninstall.exe"

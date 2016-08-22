@@ -21,6 +21,8 @@ namespace Tests {
         static void Usage() {
             Console.WriteLine("Usage: test-cs (option) (parameters)");
             Console.WriteLine("Options: compare   (source) (dest)");
+            Console.WriteLine("         mirror    (source) (dest)");
+            Console.WriteLine("         preview   (source) (dest)");
             Console.WriteLine("         randomize (path)");
             throw new ArgumentException("Invalid command-line arguments.");
         }
@@ -31,11 +33,27 @@ namespace Tests {
 
             switch (args[0]) {
                 case "compare":
+                case "mirror":
+                case "preview":
                     if (args.Length < 3)
                         Usage();
 
                     FS f1 = new FS(args[1]), f2 = new FS(args[2]);
-                    f1.CompareTo(f2);
+
+                    bool mirror = (args[0] == "mirror");
+                    bool preview = (args[0] == "preview");
+
+                    Action<FS.Entry> added = e => Console.WriteLine("+ " + e.relative_path);
+                    Action<FS.Entry> removed = e => Console.WriteLine("- " + e.relative_path);
+                    Action<Tuple<FS.Entry, FS.Entry>> changed =
+                        t => {
+                            Console.WriteLine("~ " + t.Item1.relative_path);
+                            FS.Entry.CompareAttributes(t.Item1, t.Item2);
+                            if (preview || mirror)
+                                t.Item1.LoadAttributesFrom(t.Item2, preview);
+                        };
+
+                    f1.CompareTo(f2, added, removed, changed);
                     break;
 
                 case "randomize":
@@ -59,20 +77,26 @@ namespace Tests {
     }
 
     class FS {
+        const bool COMPARE_CREATION_TIMES = true;
+
         public struct Entry : IComparable<Entry> {
-            public readonly string base_path;
+            public readonly bool is_dir;
+            public readonly string abs_path;
             public readonly string relative_path;
             public readonly IO.FileAttributes attr;
-            //public readonly DateTime date_created;
-            public readonly DateTime date_last_modified;
+            public readonly DateTime date_created_utc;
+            public readonly DateTime date_last_modified_utc;
+            public readonly DateTime date_last_accessed_utc;
 
             public Entry(string absolute_path, string _basepath) {
+                is_dir = IO.Directory.Exists(absolute_path);
                 attr = IO.File.GetAttributes(absolute_path);
 
-                //date_created = IO.File.GetCreationTimeUtc(absolute_path);
-                date_last_modified = IO.File.GetLastWriteTimeUtc(absolute_path);
+                date_created_utc = IO.File.GetCreationTimeUtc(absolute_path);
+                date_last_modified_utc = IO.File.GetLastWriteTimeUtc(absolute_path);
+                date_last_accessed_utc = IO.File.GetLastAccessTimeUtc(absolute_path);
 
-                base_path = _basepath.Trim(IO.Path.DirectorySeparatorChar);
+                abs_path = absolute_path;
                 relative_path = absolute_path.Substring(_basepath.Length).Trim(IO.Path.DirectorySeparatorChar);
             }
 
@@ -80,10 +104,10 @@ namespace Tests {
                 // int bases = base_path.CompareTo(other.base_path); // Don't compare bases
                 int relatives = relative_path.CompareTo(other.relative_path);
                 int attributes = attr.CompareTo(other.attr);
-                //  int dates_created = date_created.CompareTo(other.date_created);
-                int dates_last_modified = date_last_modified.CompareTo(other.date_last_modified);
+                int dates_created = (COMPARE_CREATION_TIMES ? date_created_utc.CompareTo(other.date_created_utc) : 0);
+                int dates_last_modified = (is_dir ? 0 : date_last_modified_utc.CompareTo(other.date_last_modified_utc));
 
-                return (relatives != 0 ? relatives : (attributes != 0 ? attributes : dates_last_modified)); //(bases != 0 ? bases : ... )
+                return (relatives != 0 ? relatives : (attributes != 0 ? attributes : (dates_last_modified != 0 ? dates_last_modified : dates_created))); //(bases != 0 ? bases : ... )
             }
 
             public static void CompareAttributes(FS.Entry e1, FS.Entry e2) {
@@ -118,7 +142,46 @@ namespace Tests {
                 };
 
                 //CompareDates("Creation date:", e1.date_created, e2.date_created);
-                CompareDates("Modification date:", e1.date_last_modified, e2.date_last_modified);
+                CompareDates("Modification date:", e1.date_last_modified_utc, e2.date_last_modified_utc);
+            }
+
+            public void LoadAttributesFrom(FS.Entry other, bool preview) {
+                //DateTime base_date = new DateTime(2012, 01, 07, 19, 0, 0);
+                //if ((date_last_modified_utc - base_date).TotalDays > 1 && date_last_modified_utc > other.date_last_modified_utc) {
+                if (date_last_modified_utc > other.date_last_modified_utc) {
+                    Console.WriteLine(" Current file is more recent: not updating " + abs_path);
+                    return;
+                }
+
+                Console.Write(" Updating " + abs_path + "... ");
+
+                if (preview) {
+                    Console.WriteLine("not done.");
+                    return;
+                }
+                else {
+                    try {
+                        //IO.File.SetAttributes(abs_path, is_dir ? IO.FileAttributes.Directory : IO.FileAttributes.Normal); //Set attributes to normal first.
+                        IO.File.SetAttributes(abs_path, other.attr);
+                        if (is_dir) {
+                            IO.Directory.SetCreationTimeUtc(abs_path, other.date_created_utc);
+                            IO.Directory.SetLastWriteTimeUtc(abs_path, other.date_last_modified_utc);
+                            IO.Directory.SetLastAccessTimeUtc(abs_path, other.date_last_accessed_utc);
+                        }
+                        else {
+                            IO.File.SetCreationTimeUtc(abs_path, other.date_created_utc);
+                            IO.File.SetLastWriteTimeUtc(abs_path, other.date_last_modified_utc);
+                            IO.File.SetLastAccessTimeUtc(abs_path, other.date_last_accessed_utc);
+                        }
+                        Console.WriteLine("done.");
+                    }
+                    catch (System.UnauthorizedAccessException) {
+                        Console.WriteLine("failed.");
+                    }
+                    catch (System.IO.IOException) {
+                        Console.WriteLine("failed.");
+                    }
+                }
             }
         }
 
@@ -132,16 +195,24 @@ namespace Tests {
         }
 
         private void scan(string path) {
-            foreach (string file in IO.Directory.GetFiles(path))
-                entries.Add(new Entry(file, basepath));
+            try {
+                foreach (string file in IO.Directory.GetFiles(path))
+                    entries.Add(new Entry(file, basepath));
 
-            foreach (string directory in IO.Directory.GetDirectories(path)) {
-                entries.Add(new Entry(directory, basepath));
-                scan(directory);
+                foreach (string directory in IO.Directory.GetDirectories(path)) {
+                    entries.Add(new Entry(directory, basepath));
+                    scan(directory);
+                }
+            }
+            catch (System.UnauthorizedAccessException) {
+
+            }
+            catch (System.IO.IOException ex) {
+                Console.WriteLine("!! " + ex.Message + " / " + path);
             }
         }
 
-        public void CompareTo(FS other) {
+        public void CompareTo(FS other, Action<FS.Entry> Addition, Action<FS.Entry> Removal, Action<Tuple<FS.Entry, FS.Entry>> Change) {
             entries.Sort();
             other.entries.Sort();
 
@@ -177,9 +248,10 @@ namespace Tests {
             while (other_pos < other.entries.Count)
                 Added.Add(other.entries[other_pos++]);
 
-            Added.ForEach(e => Console.WriteLine("+ " + e.relative_path));
-            Removed.ForEach(e => Console.WriteLine("- " + e.relative_path));
-            Changed.ForEach(t => { Console.WriteLine("~ " + t.Item1.relative_path); Entry.CompareAttributes(t.Item1, t.Item2); });
+            Added.ForEach(Addition);
+            Removed.ForEach(Removal);
+            Changed.ForEach(Change);
+            Console.WriteLine((entries.Count + other.entries.Count).ToString() + " entries compared.");
         }
     }
 

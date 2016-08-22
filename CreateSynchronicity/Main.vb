@@ -23,12 +23,11 @@ Module Main
             If Not MsgLoop.ExitNeeded Then Application.Run(MsgLoop)
 
         Catch Ex As Exception
-            Dim ExceptionString As String = Revision.Build & Environment.NewLine & Application.ProductVersion & Environment.NewLine & Ex.ToString
-            If MessageBox.Show("A critical error has occured. Can we upload the error log? " & Environment.NewLine & "Here's what we would send:" & Environment.NewLine & Environment.NewLine & ExceptionString & Environment.NewLine & Environment.NewLine & "If not, you can copy this message using Ctrl+C and send it to createsoftware@users.sourceforge.net." & Environment.NewLine, "Critical error", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+            If MessageBox.Show("A critical error has occured. Can we upload the error log? " & Environment.NewLine & "Here's what we would send:" & Environment.NewLine & Environment.NewLine & Ex.ToString & Environment.NewLine & Environment.NewLine & "If not, you can copy this message using Ctrl+C and send it to createsoftware@users.sourceforge.net." & Environment.NewLine, "Critical error", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
                 Dim ReportingClient As New Net.WebClient
                 Try
                     ReportingClient.Headers.Add("Content-Type", "application/x-www-form-urlencoded")
-                    MessageBox.Show(ReportingClient.UploadString(Branding.Web & "code/bug.php", "POST", "msg=" & ExceptionString), "Bug report submitted!", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    MessageBox.Show(ReportingClient.UploadString(Branding.Web & "code/bug.php", "POST", "version=" & Application.ProductVersion & "/" & Revision.Build & "&msg=" & Ex.ToString), "Bug report submitted!", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 Catch SubEx As Net.WebException
                     MessageBox.Show("Unable to submit report. Plead send the following to createsoftware@users.sourceforge.net (Ctrl+C): " & Environment.NewLine & Ex.ToString, "Unable to submit report", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 Finally
@@ -54,18 +53,20 @@ Friend NotInheritable Class MessageLoop
         ' Initialize ProgramConfig, Translation 
         InitializeSharedObjects()
 
-        'Read command line settings
-        CommandLine.ReadArgs(New List(Of String)(Environment.GetCommandLineArgs()))
-
         ' Start logging
+        ProgramConfig.LogAppEvent(New String("="c, 20))
         ProgramConfig.LogAppEvent("Program started: " & Application.StartupPath)
         ProgramConfig.LogAppEvent(String.Format("Profiles folder: {0}.", ProgramConfig.ConfigRootDir))
         Interaction.ShowDebug(Translation.Translate("\DEBUG_WARNING"), Translation.Translate("\DEBUG_MODE"))
 
+        'Read command line settings
+        CommandLine.ReadArgs(New List(Of String)(Environment.GetCommandLineArgs()))
+
         ' Check if multiple instances are allowed.
         If CommandLine.RunAs = CommandLine.RunMode.Scheduler AndAlso SchedulerAlreadyRunning() Then
             ProgramConfig.LogAppEvent("Scheduler already running; exiting.")
-            ExitNeeded = True : Exit Sub
+            ExitNeeded = True
+            Exit Sub
         Else
             AddHandler Me.ThreadExit, AddressOf MessageLoop_ThreadExit
         End If
@@ -74,6 +75,7 @@ Friend NotInheritable Class MessageLoop
         ReloadProfiles()
         ProgramConfig.LoadProgramSettings()
         If Not ProgramConfig.ProgramSettingsSet(ProgramSetting.AutoUpdates) Or Not ProgramConfig.ProgramSettingsSet(ProgramSetting.Language) Then
+            ProgramConfig.LogDebugEvent("Auto updates or language not set; launching first run dialog.")
             HandleFirstRun()
         End If
 
@@ -98,6 +100,8 @@ Friend NotInheritable Class MessageLoop
             Interaction.ShowMsg(FreeSpace.ToString)
 #End If
         Else
+            ProgramConfig.LogDebugEvent(String.Format("Initialization complete. Running as '{0}'.", CommandLine.RunAs.ToString))
+
             If CommandLine.RunAs = CommandLine.RunMode.Queue Or CommandLine.RunAs = CommandLine.RunMode.Scheduler Then
                 Interaction.ToggleStatusIcon(True)
 
@@ -112,7 +116,8 @@ Friend NotInheritable Class MessageLoop
 #If DEBUG Then
             ElseIf CommandLine.RunAs = CommandLine.RunMode.Scanner Then
                 Explore(CommandLine.ScanPath)
-                ExitNeeded = True : Exit Sub
+                ExitNeeded = True
+                Exit Sub
 #End If
             Else
                 AddHandler MainFormInstance.FormClosed, AddressOf ReloadMainForm
@@ -204,6 +209,8 @@ Friend NotInheritable Class MessageLoop
 #Region "Scheduling"
     Private Function SchedulerAlreadyRunning() As Boolean
         Dim MutexName As String = "[[Create Synchronicity scheduler]] " & Application.ExecutablePath.Replace(ProgramSetting.DirSep, "!"c).ToLower(Interaction.InvariantCulture)
+        If MutexName.Length > 260 Then MutexName = MutexName.Substring(0, 260)
+
         ProgramConfig.LogDebugEvent(String.Format("Registering mutex: ""{0}""", MutexName))
 
         Try
@@ -211,6 +218,9 @@ Friend NotInheritable Class MessageLoop
         Catch Ex As Threading.AbandonedMutexException
             ProgramConfig.LogDebugEvent("Abandoned mutex detected")
             Return False
+        Catch Ex As System.UnauthorizedAccessException
+            ProgramConfig.LogDebugEvent("Acess to the Mutex forbidden")
+            Return True
         End Try
 
         Return (Not Blocker.WaitOne(0, False))
@@ -224,10 +234,12 @@ Friend NotInheritable Class MessageLoop
         Next
 
         Try
-            If NeedToRunAtBootTime Then
+            If NeedToRunAtBootTime AndAlso ProgramConfig.GetProgramSetting(Of Boolean)(ProgramSetting.AutoStartupRegistration, True) Then
                 ProgramConfig.RegisterBoot()
-                ProgramConfig.LogAppEvent("Registered program in startup list, trying to start scheduler")
-                If CommandLine.RunAs = CommandLine.RunMode.Normal Then Diagnostics.Process.Start(Application.ExecutablePath, "/scheduler /noupdates" & If(CommandLine.Log, " /log", ""))
+                If CommandLine.RunAs = CommandLine.RunMode.Normal Then
+                    ProgramConfig.LogAppEvent("Starting scheduler")
+                    Diagnostics.Process.Start(Application.ExecutablePath, "/scheduler /noupdates" & If(CommandLine.Log, " /log", ""))
+                End If
             Else
                 If Microsoft.Win32.Registry.GetValue(ProgramSetting.RegistryRootedBootKey, ProgramSetting.RegistryBootVal, Nothing) IsNot Nothing Then
                     ProgramConfig.LogAppEvent("Unregistering program from startup list")

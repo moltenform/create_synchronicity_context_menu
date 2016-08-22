@@ -81,18 +81,19 @@ Partial Class SettingsForm
         Me.SaveButton = New System.Windows.Forms.Button()
         Me.FolderBrowser = New System.Windows.Forms.FolderBrowserDialog()
         Me.AdvancedBox = New System.Windows.Forms.GroupBox()
-        Me.GroupLabel = New System.Windows.Forms.Label()
+        Me.TableLayoutPanel1 = New System.Windows.Forms.TableLayoutPanel()
         Me.GroupNameBox = New System.Windows.Forms.ComboBox()
+        Me.GroupLabel = New System.Windows.Forms.Label()
         Me.StrictDateComparisonOption = New System.Windows.Forms.CheckBox()
         Me.TimeOffsetLabel = New System.Windows.Forms.Label()
         Me.MoreLabel = New System.Windows.Forms.LinkLabel()
         Me.TimeOffset = New System.Windows.Forms.NumericUpDown()
         Me.TimeOffsetHoursLabel = New System.Windows.Forms.Label()
-        Me.BottomDescLabel = New System.Windows.Forms.Label()
         Me.ExpertMenu = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.CreateDestOption = New System.Windows.Forms.ToolStripMenuItem()
         Me.CheckFileSizeOption = New System.Windows.Forms.ToolStripMenuItem()
         Me.ChecksumOption = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ToolStripSeparator4 = New System.Windows.Forms.ToolStripSeparator()
         Me.PropagateUpdatesOption = New System.Windows.Forms.ToolStripMenuItem()
         Me.DirectoriesBox.SuspendLayout()
         Me.ViewsLayoutPanel.SuspendLayout()
@@ -106,6 +107,7 @@ Partial Class SettingsForm
         Me.IncludeExcludeLayoutPanel.SuspendLayout()
         Me.ActionsPanel.SuspendLayout()
         Me.AdvancedBox.SuspendLayout()
+        Me.TableLayoutPanel1.SuspendLayout()
         CType(Me.TimeOffset, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.ExpertMenu.SuspendLayout()
         Me.SuspendLayout()
@@ -221,7 +223,7 @@ Partial Class SettingsForm
         Me.ViewsLayoutPanel.RowStyles.Add(New System.Windows.Forms.RowStyle())
         Me.ViewsLayoutPanel.RowStyles.Add(New System.Windows.Forms.RowStyle())
         Me.ViewsLayoutPanel.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100.0!))
-        Me.ViewsLayoutPanel.Size = New System.Drawing.Size(694, 140)
+        Me.ViewsLayoutPanel.Size = New System.Drawing.Size(694, 147)
         Me.ViewsLayoutPanel.TabIndex = 0
         '
         'ReloadButton
@@ -264,7 +266,7 @@ Partial Class SettingsForm
         '
         Me.HelpLink.Anchor = System.Windows.Forms.AnchorStyles.Bottom
         Me.HelpLink.Image = CType(resources.GetObject("HelpLink.Image"), System.Drawing.Image)
-        Me.HelpLink.Location = New System.Drawing.Point(332, 112)
+        Me.HelpLink.Location = New System.Drawing.Point(332, 119)
         Me.HelpLink.Name = "HelpLink"
         Me.HelpLink.Size = New System.Drawing.Size(28, 28)
         Me.HelpLink.TabIndex = 6
@@ -277,13 +279,13 @@ Partial Class SettingsForm
         Me.LeftViewPanel.Location = New System.Drawing.Point(3, 16)
         Me.LeftViewPanel.Name = "LeftViewPanel"
         Me.ViewsLayoutPanel.SetRowSpan(Me.LeftViewPanel, 3)
-        Me.LeftViewPanel.Size = New System.Drawing.Size(323, 121)
+        Me.LeftViewPanel.Size = New System.Drawing.Size(323, 128)
         Me.LeftViewPanel.TabIndex = 7
         '
         'LeftReloadButton
         '
         Me.LeftReloadButton.Anchor = System.Windows.Forms.AnchorStyles.None
-        Me.LeftReloadButton.Location = New System.Drawing.Point(111, 27)
+        Me.LeftReloadButton.Location = New System.Drawing.Point(111, 28)
         Me.LeftReloadButton.Name = "LeftReloadButton"
         Me.LeftReloadButton.Size = New System.Drawing.Size(100, 66)
         Me.LeftReloadButton.TabIndex = 7
@@ -299,7 +301,7 @@ Partial Class SettingsForm
         Me.LeftView.Enabled = False
         Me.LeftView.Location = New System.Drawing.Point(0, 0)
         Me.LeftView.Name = "LeftView"
-        Me.LeftView.Size = New System.Drawing.Size(323, 121)
+        Me.LeftView.Size = New System.Drawing.Size(323, 128)
         Me.LeftView.TabIndex = 1
         Me.LeftView.Tag = "\TREEVIEW_TIPS"
         '
@@ -365,13 +367,13 @@ Partial Class SettingsForm
         Me.RightViewPanel.Location = New System.Drawing.Point(367, 16)
         Me.RightViewPanel.Name = "RightViewPanel"
         Me.ViewsLayoutPanel.SetRowSpan(Me.RightViewPanel, 3)
-        Me.RightViewPanel.Size = New System.Drawing.Size(324, 121)
+        Me.RightViewPanel.Size = New System.Drawing.Size(324, 128)
         Me.RightViewPanel.TabIndex = 8
         '
         'RightReloadButton
         '
         Me.RightReloadButton.Anchor = System.Windows.Forms.AnchorStyles.None
-        Me.RightReloadButton.Location = New System.Drawing.Point(112, 27)
+        Me.RightReloadButton.Location = New System.Drawing.Point(112, 28)
         Me.RightReloadButton.Name = "RightReloadButton"
         Me.RightReloadButton.Size = New System.Drawing.Size(100, 66)
         Me.RightReloadButton.TabIndex = 8
@@ -385,7 +387,7 @@ Partial Class SettingsForm
         Me.RightView.Enabled = False
         Me.RightView.Location = New System.Drawing.Point(0, 0)
         Me.RightView.Name = "RightView"
-        Me.RightView.Size = New System.Drawing.Size(324, 121)
+        Me.RightView.Size = New System.Drawing.Size(324, 128)
         Me.RightView.TabIndex = 3
         Me.RightView.Tag = "\TREEVIEW_TIPS"
         '
@@ -397,7 +399,7 @@ Partial Class SettingsForm
         Me.ViewsBox.Controls.Add(Me.ViewsLayoutPanel)
         Me.ViewsBox.Location = New System.Drawing.Point(12, 89)
         Me.ViewsBox.Name = "ViewsBox"
-        Me.ViewsBox.Size = New System.Drawing.Size(700, 160)
+        Me.ViewsBox.Size = New System.Drawing.Size(700, 167)
         Me.ViewsBox.TabIndex = 1
         Me.ViewsBox.TabStop = False
         Me.ViewsBox.Text = "\SUBDIRECTORIES"
@@ -408,7 +410,7 @@ Partial Class SettingsForm
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.SynchronizationMethodBox.Controls.Add(Me.StrictMirrorOption)
         Me.SynchronizationMethodBox.Controls.Add(Me.MethodLayoutPanel)
-        Me.SynchronizationMethodBox.Location = New System.Drawing.Point(12, 255)
+        Me.SynchronizationMethodBox.Location = New System.Drawing.Point(12, 262)
         Me.SynchronizationMethodBox.Name = "SynchronizationMethodBox"
         Me.SynchronizationMethodBox.Size = New System.Drawing.Size(700, 69)
         Me.SynchronizationMethodBox.TabIndex = 2
@@ -487,7 +489,7 @@ Partial Class SettingsForm
         Me.IncludeExcludeBox.Controls.Add(Me.CopyAllFilesCheckBox)
         Me.IncludeExcludeBox.Controls.Add(Me.IncludeExcludeLayoutPanel)
         Me.IncludeExcludeBox.Controls.Add(Me.ReplicateEmptyDirectoriesOption)
-        Me.IncludeExcludeBox.Location = New System.Drawing.Point(12, 330)
+        Me.IncludeExcludeBox.Location = New System.Drawing.Point(12, 337)
         Me.IncludeExcludeBox.Name = "IncludeExcludeBox"
         Me.IncludeExcludeBox.Size = New System.Drawing.Size(700, 97)
         Me.IncludeExcludeBox.TabIndex = 3
@@ -590,7 +592,7 @@ Partial Class SettingsForm
         Me.ActionsPanel.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.0!))
         Me.ActionsPanel.Controls.Add(Me.CancelBtn, 1, 0)
         Me.ActionsPanel.Controls.Add(Me.SaveButton, 0, 0)
-        Me.ActionsPanel.Location = New System.Drawing.Point(512, 507)
+        Me.ActionsPanel.Location = New System.Drawing.Point(512, 519)
         Me.ActionsPanel.Name = "ActionsPanel"
         Me.ActionsPanel.RowCount = 1
         Me.ActionsPanel.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50.0!))
@@ -630,49 +632,69 @@ Partial Class SettingsForm
         '
         Me.AdvancedBox.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.AdvancedBox.Controls.Add(Me.GroupLabel)
-        Me.AdvancedBox.Controls.Add(Me.GroupNameBox)
-        Me.AdvancedBox.Controls.Add(Me.StrictDateComparisonOption)
+        Me.AdvancedBox.Controls.Add(Me.TableLayoutPanel1)
         Me.AdvancedBox.Controls.Add(Me.TimeOffsetLabel)
         Me.AdvancedBox.Controls.Add(Me.MoreLabel)
         Me.AdvancedBox.Controls.Add(Me.TimeOffset)
         Me.AdvancedBox.Controls.Add(Me.TimeOffsetHoursLabel)
-        Me.AdvancedBox.Location = New System.Drawing.Point(12, 433)
+        Me.AdvancedBox.Location = New System.Drawing.Point(12, 440)
         Me.AdvancedBox.Name = "AdvancedBox"
-        Me.AdvancedBox.Size = New System.Drawing.Size(700, 68)
+        Me.AdvancedBox.Size = New System.Drawing.Size(700, 73)
         Me.AdvancedBox.TabIndex = 4
         Me.AdvancedBox.TabStop = False
         Me.AdvancedBox.Text = "\ADVANCED_OPTS"
         '
+        'TableLayoutPanel1
+        '
+        Me.TableLayoutPanel1.ColumnCount = 4
+        Me.TableLayoutPanel1.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle())
+        Me.TableLayoutPanel1.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 80.0!))
+        Me.TableLayoutPanel1.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20.0!))
+        Me.TableLayoutPanel1.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle())
+        Me.TableLayoutPanel1.Controls.Add(Me.GroupNameBox, 1, 0)
+        Me.TableLayoutPanel1.Controls.Add(Me.GroupLabel, 0, 0)
+        Me.TableLayoutPanel1.Controls.Add(Me.StrictDateComparisonOption, 3, 0)
+        Me.TableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Top
+        Me.TableLayoutPanel1.Location = New System.Drawing.Point(3, 17)
+        Me.TableLayoutPanel1.Name = "TableLayoutPanel1"
+        Me.TableLayoutPanel1.RowCount = 1
+        Me.TableLayoutPanel1.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100.0!))
+        Me.TableLayoutPanel1.Size = New System.Drawing.Size(694, 26)
+        Me.TableLayoutPanel1.TabIndex = 10
+        '
+        'GroupNameBox
+        '
+        Me.GroupNameBox.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupNameBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend
+        Me.GroupNameBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems
+        Me.GroupNameBox.FormattingEnabled = True
+        Me.GroupNameBox.Location = New System.Drawing.Point(62, 3)
+        Me.GroupNameBox.Name = "GroupNameBox"
+        Me.GroupNameBox.Size = New System.Drawing.Size(367, 21)
+        Me.GroupNameBox.TabIndex = 9
+        '
         'GroupLabel
         '
         Me.GroupLabel.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom), System.Windows.Forms.AnchorStyles)
-        Me.GroupLabel.Location = New System.Drawing.Point(6, 20)
+        Me.GroupLabel.AutoSize = True
+        Me.GroupLabel.Location = New System.Drawing.Point(3, 0)
         Me.GroupLabel.Name = "GroupLabel"
-        Me.GroupLabel.Size = New System.Drawing.Size(76, 17)
+        Me.GroupLabel.Size = New System.Drawing.Size(53, 26)
         Me.GroupLabel.TabIndex = 8
         Me.GroupLabel.Text = "\GROUP"
         Me.GroupLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         '
-        'GroupNameBox
-        '
-        Me.GroupNameBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend
-        Me.GroupNameBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems
-        Me.GroupNameBox.FormattingEnabled = True
-        Me.GroupNameBox.Location = New System.Drawing.Point(88, 18)
-        Me.GroupNameBox.Name = "GroupNameBox"
-        Me.GroupNameBox.Size = New System.Drawing.Size(259, 21)
-        Me.GroupNameBox.TabIndex = 9
-        '
         'StrictDateComparisonOption
         '
-        Me.StrictDateComparisonOption.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.StrictDateComparisonOption.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom), System.Windows.Forms.AnchorStyles)
         Me.StrictDateComparisonOption.AutoSize = True
         Me.StrictDateComparisonOption.Checked = True
         Me.StrictDateComparisonOption.CheckState = System.Windows.Forms.CheckState.Checked
-        Me.StrictDateComparisonOption.Location = New System.Drawing.Point(532, 20)
+        Me.StrictDateComparisonOption.Location = New System.Drawing.Point(528, 3)
         Me.StrictDateComparisonOption.Name = "StrictDateComparisonOption"
-        Me.StrictDateComparisonOption.Size = New System.Drawing.Size(162, 17)
+        Me.StrictDateComparisonOption.Size = New System.Drawing.Size(162, 20)
         Me.StrictDateComparisonOption.TabIndex = 2
         Me.StrictDateComparisonOption.Tag = "\STRICTCOMPARISON_TAG"
         Me.StrictDateComparisonOption.Text = "\STRICT_COMPARISON"
@@ -682,7 +704,7 @@ Partial Class SettingsForm
         'TimeOffsetLabel
         '
         Me.TimeOffsetLabel.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.TimeOffsetLabel.Location = New System.Drawing.Point(451, 45)
+        Me.TimeOffsetLabel.Location = New System.Drawing.Point(454, 48)
         Me.TimeOffsetLabel.Name = "TimeOffsetLabel"
         Me.TimeOffsetLabel.Size = New System.Drawing.Size(143, 13)
         Me.TimeOffsetLabel.TabIndex = 3
@@ -692,7 +714,7 @@ Partial Class SettingsForm
         'MoreLabel
         '
         Me.MoreLabel.AutoSize = True
-        Me.MoreLabel.Location = New System.Drawing.Point(6, 45)
+        Me.MoreLabel.Location = New System.Drawing.Point(6, 48)
         Me.MoreLabel.Name = "MoreLabel"
         Me.MoreLabel.Size = New System.Drawing.Size(45, 13)
         Me.MoreLabel.TabIndex = 7
@@ -702,7 +724,7 @@ Partial Class SettingsForm
         'TimeOffset
         '
         Me.TimeOffset.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.TimeOffset.Location = New System.Drawing.Point(600, 43)
+        Me.TimeOffset.Location = New System.Drawing.Point(600, 46)
         Me.TimeOffset.Maximum = New Decimal(New Integer() {2, 0, 0, 0})
         Me.TimeOffset.Minimum = New Decimal(New Integer() {2, 0, 0, -2147483648})
         Me.TimeOffset.Name = "TimeOffset"
@@ -713,29 +735,20 @@ Partial Class SettingsForm
         '
         Me.TimeOffsetHoursLabel.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.TimeOffsetHoursLabel.AutoSize = True
-        Me.TimeOffsetHoursLabel.Location = New System.Drawing.Point(641, 45)
+        Me.TimeOffsetHoursLabel.Location = New System.Drawing.Point(641, 48)
         Me.TimeOffsetHoursLabel.Name = "TimeOffsetHoursLabel"
         Me.TimeOffsetHoursLabel.Size = New System.Drawing.Size(53, 13)
         Me.TimeOffsetHoursLabel.TabIndex = 5
         Me.TimeOffsetHoursLabel.Text = "\HOURS"
         '
-        'BottomDescLabel
-        '
-        Me.BottomDescLabel.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left) _
-            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.BottomDescLabel.Location = New System.Drawing.Point(12, 507)
-        Me.BottomDescLabel.Name = "BottomDescLabel"
-        Me.BottomDescLabel.Size = New System.Drawing.Size(497, 31)
-        Me.BottomDescLabel.TabIndex = 5
-        '
         'ExpertMenu
         '
-        Me.ExpertMenu.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.CreateDestOption, Me.CheckFileSizeOption, Me.ChecksumOption, Me.PropagateUpdatesOption})
+        Me.ExpertMenu.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.CreateDestOption, Me.CheckFileSizeOption, Me.ChecksumOption, Me.ToolStripSeparator4, Me.PropagateUpdatesOption})
         Me.ExpertMenu.Name = "ExpertMenu"
         Me.ExpertMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.System
         Me.ExpertMenu.ShowCheckMargin = True
         Me.ExpertMenu.ShowImageMargin = False
-        Me.ExpertMenu.Size = New System.Drawing.Size(163, 92)
+        Me.ExpertMenu.Size = New System.Drawing.Size(163, 98)
         '
         'CreateDestOption
         '
@@ -758,10 +771,16 @@ Partial Class SettingsForm
         Me.ChecksumOption.Size = New System.Drawing.Size(162, 22)
         Me.ChecksumOption.Text = "\MD5"
         '
+        'ToolStripSeparator4
+        '
+        Me.ToolStripSeparator4.Name = "ToolStripSeparator4"
+        Me.ToolStripSeparator4.Size = New System.Drawing.Size(159, 6)
+        '
         'PropagateUpdatesOption
         '
         Me.PropagateUpdatesOption.Checked = True
         Me.PropagateUpdatesOption.CheckOnClick = True
+        Me.PropagateUpdatesOption.CheckState = System.Windows.Forms.CheckState.Checked
         Me.PropagateUpdatesOption.Name = "PropagateUpdatesOption"
         Me.PropagateUpdatesOption.Size = New System.Drawing.Size(162, 22)
         Me.PropagateUpdatesOption.Text = "\PROPAGATE"
@@ -772,14 +791,13 @@ Partial Class SettingsForm
         Me.AutoScaleDimensions = New System.Drawing.SizeF(7.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.CancelButton = Me.CancelBtn
-        Me.ClientSize = New System.Drawing.Size(724, 550)
+        Me.ClientSize = New System.Drawing.Size(724, 562)
         Me.Controls.Add(Me.ActionsPanel)
         Me.Controls.Add(Me.AdvancedBox)
         Me.Controls.Add(Me.ViewsBox)
         Me.Controls.Add(Me.DirectoriesBox)
         Me.Controls.Add(Me.SynchronizationMethodBox)
         Me.Controls.Add(Me.IncludeExcludeBox)
-        Me.Controls.Add(Me.BottomDescLabel)
         Me.Font = New System.Drawing.Font("Verdana", 8.25!)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow
         Me.Name = "SettingsForm"
@@ -804,6 +822,8 @@ Partial Class SettingsForm
         Me.ActionsPanel.ResumeLayout(False)
         Me.AdvancedBox.ResumeLayout(False)
         Me.AdvancedBox.PerformLayout()
+        Me.TableLayoutPanel1.ResumeLayout(False)
+        Me.TableLayoutPanel1.PerformLayout()
         CType(Me.TimeOffset, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ExpertMenu.ResumeLayout(False)
         Me.ResumeLayout(False)
@@ -843,7 +863,6 @@ Partial Class SettingsForm
     Friend WithEvents DontSynchronizeMenuItem As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents ReplicateEmptyDirectoriesOption As System.Windows.Forms.CheckBox
     Friend WithEvents AdvancedBox As System.Windows.Forms.GroupBox
-    Friend WithEvents BottomDescLabel As System.Windows.Forms.Label
     Friend WithEvents StrictMirrorOption As System.Windows.Forms.CheckBox
     Friend WithEvents TimeOffset As System.Windows.Forms.NumericUpDown
     Friend WithEvents TimeOffsetHoursLabel As System.Windows.Forms.Label
@@ -867,9 +886,10 @@ Partial Class SettingsForm
     Friend WithEvents ExpertMenu As System.Windows.Forms.ContextMenuStrip
     Friend WithEvents CheckFileSizeOption As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents ChecksumOption As System.Windows.Forms.ToolStripMenuItem
-    Friend WithEvents ToolStripMenuItem1 As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents CreateDestOption As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents PropagateUpdatesOption As System.Windows.Forms.ToolStripMenuItem
     Friend WithEvents GroupLabel As System.Windows.Forms.Label
     Friend WithEvents GroupNameBox As System.Windows.Forms.ComboBox
+    Friend WithEvents ToolStripSeparator4 As System.Windows.Forms.ToolStripSeparator
+    Friend WithEvents TableLayoutPanel1 As System.Windows.Forms.TableLayoutPanel
 End Class

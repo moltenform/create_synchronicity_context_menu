@@ -1,6 +1,5 @@
 http://www.softpedia.com/get/System/File-Management/Create-Synchronicity.shtml
 http://forum.cockos.com/showthread.php?s=55699f42b4d4d9564ab8cdfa749f3a03&t=56028
-http://vietbao.vn/index.php?option=googlesearch&ie=UTF-8&oe=UTF-8&cof=FORID%3A11&cx=009047068290612181791%3Aajvgnbvfngg&hl=vi&sa=T%C3%ACm+Ki%E1%BA%BFm&as_occt=any&sitesearch=vietbao.vn&q=create+synchronicity#223
 http://vietbao.vn/index.php?option=googlesearch&ie=UTF-8&oe=UTF-8&cof=FORID%3A11&cx=009047068290612181791%3Aajvgnbvfngg&hl=vi&sa=T%C3%ACm+Ki%E1%BA%BFm&as_occt=any&sitesearch=vietbao.vn&q=create+synchronicity
 http://tim.vietbao.vn/create_synchronicity/
 http://vietbao.vn/index.php?vtmnu=on&q=create+synchronicity&option=search&sa=T%C3%ACm+Ki%E1%BA%BFm
@@ -23,7 +22,6 @@ http://www.ilbloggatore.com/a1/tag/download/
 http://www.ilbloggatore.com/category/download/
 http://www.download.bg/index.php?cls=program&mtd=default&id=528712
 http://backup-software.findthebest.com/compare/64-134-243-251/Create-Synchronicity-vs-ZipBackup-for-Windows-vs-Backup4all-Standard-vs-Macrium-Reflect
-http://backup-software.findthebest.com/compare/64-134-243-251/Create-Synchronicity-vs-ZipBackup-for-Windows-v-Backup4all-Standard-v-Macrium-Reflect
 http://www.neowin.net/forum/topic/934274-freeware-alternative-list/page__pid__593096568__st__0
 http://www.stumbleupon.com/refer.php?url=http%3A//synchronicity.sourceforge.net/
 http://www.tomsguide.com/us/download/Create-Synchronicity,0313-30663.html
@@ -104,3 +102,5 @@ http://www.navigaweb.net/2011/09/fare-la-copia-automatica-di-sicurezza.html
 http://www.howtogeek.com/75734/keep-your-pcs-data-safe-using-create-synchronicity/
 http://abertoatedemadrugada.com/2011/11/synchronicity-sincronizacao-de-pastas-e.html
 http://www.freewaretips.gr/programs/files/backup-sync/create-syncronicity
+http://www.visualbeta.es/31193/utilidades/create-synchronicity-6-mas-opciones-para-tus-backups-y-sincronizacion-de-archivos/
+http://www.ghacks.net/2012/03/21/portable-file-syncing-software-synchroncity-6-released/

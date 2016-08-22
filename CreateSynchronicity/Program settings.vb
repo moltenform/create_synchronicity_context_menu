@@ -22,15 +22,17 @@ Friend Module ProgramSetting
     Public Const Autocomplete As String = "Autocomplete"
     Public Const Forecast As String = "Forecast"
     Public Const Pause As String = "Pause"
+    Public Const AutoStartupRegistration As String = "Auto startup registration"
 
     'Program files
     Public Const ConfigFolderName As String = "config"
     Public Const LogFolderName As String = "log"
     Public Const SettingsFileName As String = "mainconfig.ini"
     Public Const AppLogName As String = "app.log"
-    Public Const DllName As String = "compress.dll"
+    Public Const DllName As String = "compress-decompress.dll"
     'Public CompressionThreshold As Integer = 0 'Better not filter at all
 
+    Public Const ExcludedFolderPrefix As String = "folder" 'Used to parse excluded file types. For example, `folder"Documents"` means that folders named documents should be excluded.
     Public Const GroupPrefix As Char = ":"c
     Public Const EnqueuingSeparator As Char = "|"c
 #If CONFIG = "Linux" Then
@@ -177,9 +179,15 @@ NotInheritable Class ConfigHandler
             Exit Sub
         End If
 
-        Dim ConfigString As String = IO.File.ReadAllText(MainConfigFile)
-        Dim ConfigArray As New List(Of String)(ConfigString.Split(";"c))
-        For Each Setting As String In ConfigArray
+        Dim ConfigString As String
+        Try
+            ConfigString = IO.File.ReadAllText(MainConfigFile)
+        Catch Ex As IO.IOException
+            System.Threading.Thread.Sleep(200) 'Freeze for 1/5 of a second to allow for the other user to release the file.
+            ConfigString = IO.File.ReadAllText(MainConfigFile)
+        End Try
+
+        For Each Setting As String In ConfigString.Split(";"c)
             Dim Pair As String() = Setting.Split(":".ToCharArray, 2)
             If Pair.Length() < 2 Then Continue For
             If Settings.ContainsKey(Pair(0)) Then Settings.Remove(Pair(0))
@@ -228,16 +236,22 @@ NotInheritable Class ConfigHandler
         If ProgramSetting.Debug Or CommandLine.Silent Or CommandLine.Log Then
             Static UniqueID As String = Guid.NewGuid().ToString
 
-            Using AppLog As New IO.StreamWriter(AppLogFile, True)
-                AppLog.WriteLine(String.Format("[{0}][{1}] {2}", UniqueID, Date.Now.ToString(), EventData.Replace(Environment.NewLine, " // ")))
-            End Using
+            Try
+                Using AppLog As New IO.StreamWriter(AppLogFile, True)
+                    AppLog.WriteLine(String.Format("[{0}][{1}] {2}", UniqueID, Date.Now.ToString(), EventData.Replace(Environment.NewLine, " // ")))
+                End Using
+            Catch Ex As IO.IOException
+                ' File in use.
+            End Try
         End If
     End Sub
 
     Public Sub RegisterBoot()
-        If Microsoft.Win32.Registry.GetValue(ProgramSetting.RegistryRootedBootKey, ProgramSetting.RegistryBootVal, Nothing) Is Nothing Then
-            LogAppEvent("Registering program in startup list")
-            Microsoft.Win32.Registry.SetValue(ProgramSetting.RegistryRootedBootKey, ProgramSetting.RegistryBootVal, Application.ExecutablePath & " /scheduler")
+        If ProgramConfig.GetProgramSetting(Of Boolean)(ProgramSetting.AutoStartupRegistration, True) Then
+            If Microsoft.Win32.Registry.GetValue(ProgramSetting.RegistryRootedBootKey, ProgramSetting.RegistryBootVal, Nothing) Is Nothing Then
+                LogAppEvent("Registering program in startup list")
+                Microsoft.Win32.Registry.SetValue(ProgramSetting.RegistryRootedBootKey, ProgramSetting.RegistryBootVal, String.Format("""{0}"" /scheduler", Application.ExecutablePath))
+            End If
         End If
     End Sub
 
@@ -275,6 +289,14 @@ Structure CommandLine
 #End If
 
     Shared Sub ReadArgs(ByVal ArgsList As List(Of String))
+#If DEBUG Then
+        ProgramConfig.LogDebugEvent("Parsing command line settings")
+        For Each Param As String In ArgsList
+            ProgramConfig.LogDebugEvent("  Got: " + Param)
+        Next
+        ProgramConfig.LogDebugEvent("Done.")
+#End If
+
         If ArgsList.Count > 1 Then
             CommandLine.Help = ArgsList.Contains("/help")
             CommandLine.Quiet = ArgsList.Contains("/quiet")

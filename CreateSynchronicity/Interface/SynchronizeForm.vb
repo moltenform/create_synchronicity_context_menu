@@ -26,6 +26,7 @@ Friend Class SynchronizeForm
     Private Preview As Boolean 'Should show a preview.
 
     Private Status As StatusData
+    Private TitleText As String
     Private Sorter As New SyncingListSorter(3)
 
     Private FullSyncThread As Threading.Thread
@@ -67,9 +68,10 @@ Friend Class SynchronizeForm
         LeftRootPath = ProfileHandler.TranslatePath(Handler.GetSetting(Of String)(ProfileSetting.Source))
         RightRootPath = ProfileHandler.TranslatePath(Handler.GetSetting(Of String)(ProfileSetting.Destination))
 
-        FileNamePattern.LoadPatternsList(IncludedPatterns, Handler.GetSetting(Of String)(ProfileSetting.IncludedTypes, ""))
-        FileNamePattern.LoadPatternsList(ExcludedPatterns, Handler.GetSetting(Of String)(ProfileSetting.ExcludedTypes, ""))
-        FileNamePattern.LoadPatternsList(ExcludedDirPatterns, Handler.GetSetting(Of String)(ProfileSetting.ExcludedFolders, ""), True)
+        FileNamePattern.LoadPatternsList(IncludedPatterns, Handler.GetSetting(Of String)(ProfileSetting.IncludedTypes, ""), False, ProgramSetting.ExcludedFolderPrefix)
+        FileNamePattern.LoadPatternsList(ExcludedPatterns, Handler.GetSetting(Of String)(ProfileSetting.ExcludedTypes, ""), False, ProgramSetting.ExcludedFolderPrefix)
+        FileNamePattern.LoadPatternsList(ExcludedDirPatterns, Handler.GetSetting(Of String)(ProfileSetting.ExcludedFolders, ""), True, "")
+        FileNamePattern.LoadPatternsList(ExcludedDirPatterns, Handler.GetSetting(Of String)(ProfileSetting.ExcludedTypes, ""), True, ProgramSetting.ExcludedFolderPrefix)
 
         FullSyncThread = New Threading.Thread(AddressOf FullSync)
         ScanThread = New Threading.Thread(AddressOf Scan)
@@ -78,7 +80,7 @@ Friend Class SynchronizeForm
         Me.CreateHandle()
         Translation.TranslateControl(Me)
         Me.Icon = ProgramConfig.Icon
-        Me.Text = String.Format(Me.Text, Handler.ProfileName, LeftRootPath, RightRootPath) 'Feature requests #3037548, #3055740
+        TitleText = String.Format(Me.Text, Handler.ProfileName, LeftRootPath, RightRootPath)
 
         Labels = New String() {"", Step1StatusLabel.Text, Step2StatusLabel.Text, Step3StatusLabel.Text}
 
@@ -304,6 +306,18 @@ Friend Class SynchronizeForm
             End If
             Interaction.StatusIcon.Text = StatusLabel
         End SyncLock
+
+        Dim PercentProgress As Integer
+        If Status.CurrentStep = StatusData.SyncStep.Scan Then
+            PercentProgress = 0
+        ElseIf Status.CurrentStep = StatusData.SyncStep.Done OrElse Status.TotalActionsCount = 0 Then
+            PercentProgress = 100
+        Else
+            PercentProgress = CInt(100 * Status.ActionsDone / Status.TotalActionsCount)
+        End If
+
+        'Later: No need to update every time when CurrentStep \in {Scan, Done}
+        Me.Text = String.Format("({0}%) ", PercentProgress) & TitleText 'Feature requests #3037548, #3055740
     End Sub
 #End Region
 
@@ -534,7 +548,7 @@ Friend Class SynchronizeForm
             Dim DestPath As String = Destination & Entry.Path
 
             Try
-                UpdateLabel(CurrentStep, If(Entry.Action = TypeOfAction.Delete, SourcePath, DestPath))
+                UpdateLabel(CurrentStep, If(Entry.Action = TypeOfAction.Delete, SourcePath, Entry.Path))
 
                 Select Case Entry.Type
                     Case TypeOfItem.File
@@ -609,11 +623,11 @@ Friend Class SynchronizeForm
         Next
     End Sub
 
-    Private Sub AddToSyncingList(ByVal Path As String, ByVal Type As TypeOfItem, ByVal Side As SideOfSource, ByVal Action As TypeOfAction, ByVal IsUpdate As Boolean, Optional ByVal Suffix As String = "")
+    Private Sub AddToSyncingList(ByVal Path As String, ByVal Type As TypeOfItem, ByVal Side As SideOfSource, ByVal Action As TypeOfAction, ByVal IsUpdate As Boolean)
         Dim Entry As New SyncingItem With {.Path = Path, .Type = Type, .Side = Side, .Action = Action, .IsUpdate = IsUpdate, .RealId = SyncingList.Count}
 
         SyncingList.Add(Entry)
-        If Entry.Action <> TypeOfAction.Delete Then AddValidFile(Entry.Path & Suffix)
+        If Entry.Action <> TypeOfAction.Delete Then AddValidFile(If(Type = TypeOfItem.Folder, Entry.Path, GetCompressedName(Entry.Path)))
 
         Select Case Entry.Action
             Case TypeOfAction.Copy
@@ -702,8 +716,7 @@ Friend Class SynchronizeForm
         Try
             For Each SourceFile As String In IO.Directory.GetFiles(SourceFolder)
                 Log.LogInfo("Scanning " & SourceFile)
-                Dim Suffix As String = GetCompressionExt()
-                Dim DestinationFile As String = CombinePathes(DestinationFolder, IO.Path.GetFileName(SourceFile) & Suffix)
+                Dim DestinationFile As String = GetCompressedName(CombinePathes(DestinationFolder, IO.Path.GetFileName(SourceFile)))
 
                 Try
                     If IsIncludedInSync(SourceFile) Then
@@ -711,13 +724,13 @@ Friend Class SynchronizeForm
                         Dim RelativeFilePath As String = SourceFile.Substring(Context.SourceRootPath.Length)
 
                         If IsNewFile OrElse SourceIsMoreRecent(SourceFile, DestinationFile) Then
-                            AddToSyncingList(RelativeFilePath, TypeOfItem.File, Context.Source, TypeOfAction.Copy, Not IsNewFile, Suffix)
+                            AddToSyncingList(RelativeFilePath, TypeOfItem.File, Context.Source, TypeOfAction.Copy, Not IsNewFile)
                             Log.LogInfo(String.Format("SearchForChanges: {0} ""{1}"" ""{2}"" ({3}).", If(IsNewFile, "[New File]", "[Updated file]"), SourceFile, DestinationFile, RelativeFilePath))
 
                             If ProgramConfig.GetProgramSetting(Of Boolean)(ProgramSetting.Forecast, False) Then Status.BytesToCopy += Utilities.GetSize(SourceFile) 'Degrades performance.
                         Else
                             'Adds an entry to not delete this when cleaning up the other side.
-                            AddValidFile(RelativeFilePath & Suffix)
+                            AddValidFile(GetCompressedName(RelativeFilePath))
                             Log.LogInfo(String.Format("SearchForChanges: [Valid] ""{0}"" ""{1}"" ({2})", SourceFile, DestinationFile, RelativeFilePath))
                         End If
                     Else
@@ -753,9 +766,9 @@ Friend Class SynchronizeForm
                     'Don't create/update this folder.
                     Status.FoldersToCreate -= 1
                     PopSyncingList(Context.Source)
-                Else
-                    RemoveValidFile(Folder)
                 End If
+
+                RemoveValidFile(Folder) 'Folders added for creation are marked as valid in AddToSyncingList. Removing this mark is vital to ensuring that the ReplicateEmptyDirectories setting works correctly (otherwise the count increases.
 
                 'Problem: What if ancestors of a folder have been marked valid, and the folder is empty?
                 'If the folder didn't exist, it's ancestors won't be created, since only the folder itself is added.
@@ -844,10 +857,7 @@ Friend Class SynchronizeForm
     End Sub
 
     Private Sub CopyFile(ByVal SourceFile As String, ByVal DestFile As String)
-        Dim Suffix As String = GetCompressionExt()
-        Dim Compression As Boolean = Suffix <> ""
-
-        If Compression Then DestFile &= Suffix
+        Dim CompressedFile As String = GetCompressedName(DestFile)
 
         Log.LogInfo(String.Format("CopyFile: Source: {0}, Destination: {1}", SourceFile, DestFile))
 
@@ -855,9 +865,13 @@ Friend Class SynchronizeForm
             IO.File.SetAttributes(DestFile, IO.FileAttributes.Normal)
         End If
 
+        Dim Compression As Boolean = CompressedFile <> DestFile
+        DestFile = CompressedFile
+
         If Compression Then
             Static GZipCompressor As Compressor = LoadCompressionDll()
-            GZipCompressor.CompressFile(SourceFile, DestFile, Sub(Progress As Long) Status.BytesCopied += Progress) ', ByRef ContinueRunning As Boolean) 'ContinueRunning = Not [STOP]
+            Static Decompress As Boolean = Handler.GetSetting(Of Boolean)(ProfileSetting.Decompress, False)
+            GZipCompressor.CompressFile(SourceFile, CompressedFile, Decompress, Sub(Progress As Long) Status.BytesCopied += Progress) ', ByRef ContinueRunning As Boolean) 'ContinueRunning = Not [STOP]
         Else
             If IO.File.Exists(DestFile) Then
                 Try
@@ -904,9 +918,9 @@ Friend Class SynchronizeForm
         Try
             Select Case Handler.GetSetting(Of Integer)(ProfileSetting.Restrictions)
                 Case 1
-                    Return MatchesPattern(GetFileOrFolderName(FullPath), IncludedPatterns)
+                    Return FileNamePattern.MatchesPattern(GetFileOrFolderName(FullPath), IncludedPatterns)
                 Case 2
-                    Return Not MatchesPattern(GetFileOrFolderName(FullPath), ExcludedPatterns)
+                    Return Not FileNamePattern.MatchesPattern(GetFileOrFolderName(FullPath), ExcludedPatterns)
             End Select
         Catch Ex As Exception 'TODO: When?
             Log.HandleSilentError(Ex)
@@ -916,11 +930,18 @@ Friend Class SynchronizeForm
     End Function
 
     Private Function HasAcceptedDirname(ByVal Path As String) As Boolean
-        Return Not MatchesPattern(Path, ExcludedDirPatterns)
+        Return Not FileNamePattern.MatchesPattern(Path, ExcludedDirPatterns)
     End Function
 
-    Private Function GetCompressionExt() As String
-        Return Handler.GetSetting(Of String)(ProfileSetting.CompressionExt, "") 'AndAlso Utilities.GetSize(File) > ConfigOptions.CompressionThreshold
+    Private Function GetCompressedName(ByVal OriginalName As String) As String
+        Static Extension As String = Handler.GetSetting(Of String)(ProfileSetting.CompressionExt, "")
+
+        If Extension <> "" AndAlso Handler.GetSetting(Of Boolean)(ProfileSetting.Decompress, False) Then
+            Return If(OriginalName.EndsWith(Extension), OriginalName.Substring(0, OriginalName.LastIndexOf(Extension)), OriginalName)
+        Else
+            Return OriginalName + Extension
+        End If
+        'AndAlso Utilities.GetSize(File) > ConfigOptions.CompressionThreshold
     End Function
 
     Private Function AttributesChanged(ByVal AbsSource As String, ByVal AbsDest As String) As Boolean
@@ -986,10 +1007,6 @@ Friend Class SynchronizeForm
         Return Dir.TrimEnd(ProgramSetting.DirSep) & ProgramSetting.DirSep & File.TrimStart(ProgramSetting.DirSep)
     End Function
 
-    Private Shared Function GetExtension(ByVal File As String) As String
-        Return File.Substring(File.LastIndexOf("."c) + 1) 'Not used when dealing with a folder.
-    End Function
-
     Private Shared Function LoadCompressionDll() As Compressor
         Dim DLL As Reflection.Assembly = Reflection.Assembly.LoadFrom(ProgramConfig.CompressionDll)
 
@@ -998,25 +1015,6 @@ Friend Class SynchronizeForm
         Next
 
         Throw New ArgumentException("Invalid DLL: " & ProgramConfig.CompressionDll)
-    End Function
-
-    Private Shared Function MatchesPattern(ByVal PathOrFileName As String, ByRef Patterns As List(Of FileNamePattern)) As Boolean
-        Dim Extension As String = GetExtension(PathOrFileName)
-
-        For Each Pattern As FileNamePattern In Patterns 'LINUX: Problem with IgnoreCase
-            Select Case Pattern.Type
-                Case FileNamePattern.PatternType.FileExt
-                    If String.Compare(Extension, Pattern.Pattern, True) = 0 Then Return True
-                Case FileNamePattern.PatternType.FileName
-                    If String.Compare(PathOrFileName, Pattern.Pattern, True) = 0 Then Return True
-                Case FileNamePattern.PatternType.FolderName
-                    If PathOrFileName.EndsWith(Pattern.Pattern, StringComparison.CurrentCultureIgnoreCase) Then Return True
-                Case FileNamePattern.PatternType.Regex
-                    If System.Text.RegularExpressions.Regex.IsMatch(PathOrFileName, Pattern.Pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase) Then Return True
-            End Select
-        Next
-
-        Return False
     End Function
 
     Private Shared Function Md5(ByVal Path As String) As String

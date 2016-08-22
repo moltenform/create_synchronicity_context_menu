@@ -41,19 +41,9 @@ echo (*) Uploading builds to frs.sourceforge.net and rev info to web.sourceforge
 ) >> %LOG%
 
 	cd %BUILD%
-		pscp "current-build.txt" "createsoftware,synchronicity@web.sourceforge.net:/home/groups/s/sy/synchronicity/htdocs/code" 2>> %LOG%
+		pscp "current-build.txt" "release-notes.txt" SVN-CHECKSUMS "createsoftware,synchronicity@web.sourceforge.net:/home/groups/s/sy/synchronicity/htdocs/code" 2>> %LOG%
+		pscp "..\Create Synchronicity\languages\*.lng" "..\Create Synchronicity\languages\TODO.txt" "createsoftware,synchronicity@web.sourceforge.net:/home/groups/s/sy/synchronicity/htdocs/code/languages" 2>> %LOG%
 		pscp "Create_Synchronicity-r%REV%.zip" "Create_Synchronicity-r%REV%-DEBUG.zip" "Create_Synchronicity_Setup-r%REV%.exe" "Create_Synchronicity-r%REV%-Linux.zip" "Create_Synchronicity-r%REV%-Extensions.zip" "Create_Synchronicity-r%REV%-Scripts.zip" "createsoftware,synchronicity@frs.sourceforge.net:/home/pfs/project/s/sy/synchronicity/Create Synchronicity/Unreleased (SVN Builds)" 2>> %LOG%
-	cd %ROOT%
-
-echo (*) Uploading SVN-CHECKSUMS to web.sourceforge.net
-(
-	echo.
-	echo -----
-	echo Uploading SVN-CHECKSUMS via SCP.
-) >> %LOG%
-	
-	cd %BUILD%
-		pscp SVN-CHECKSUMS "createsoftware,synchronicity@web.sourceforge.net:/home/groups/s/sy/synchronicity/htdocs/code" 2>> %LOG%
 	cd %ROOT%
 
 echo (*) Building manual and uploading it to web.sourceforge.net.

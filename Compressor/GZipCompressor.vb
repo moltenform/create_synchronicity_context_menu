@@ -9,58 +9,74 @@
 Imports ICSharpCode.SharpZipLib.BZip2
 Imports ICSharpCode.SharpZipLib.GZip
 Imports ICSharpCode.SharpZipLib.Core
+Imports System.Collections.Generic
+Imports ICSharpCode.SharpZipLib.Zip.Compression.Streams
 
-Public NotInheritable Class GZipCompressor
+Public NotInheritable Class GenericCompressor
     Implements CS.Compressor
 
     Dim PreviousProgress As Long
     Dim ProgressReporter As CS.PluginCallback
+    Dim SupportedExtensions As New List(Of String)({".gz", ".bz2"})
 
     Sub HandleProgress(ByVal Sender As Object, ByVal EventArgs As ProgressEventArgs)
         ProgressReporter(EventArgs.Processed - PreviousProgress)
         PreviousProgress = EventArgs.Processed
     End Sub
 
-    Sub CompressFile(ByVal SourceFile As String, ByVal DestFile As String, ByVal ReportCallback As CS.PluginCallback) Implements CS.Compressor.CompressFile
+    Sub CompressFile(ByVal SourceFile As String, ByVal DestFile As String, ByVal Decompress As Boolean, ByVal ReportCallback As CS.PluginCallback) Implements CS.Compressor.CompressFile
         PreviousProgress = 0
         ProgressReporter = ReportCallback
 
         Dim Buffer(524228) As Byte 'DONE: Figure out the right buffer size. 281 739 264 Bytes -> 268435456:27s ; 67108864:32s ; 2097152:29s ; 524228:27s ; 4:32s
         Dim Handler As New ProgressHandler(AddressOf HandleProgress)
 
-        Using InputFile As New IO.FileStream(SourceFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
-            Using OutputFile As New IO.FileStream(DestFile, IO.FileMode.Create)
-                Select Case IO.Path.GetExtension(DestFile)
-                    Case ".gz"
-                        Using GZipStream As New GZipOutputStream(OutputFile)
-                            StreamUtils.Copy(InputFile, GZipStream, Buffer, Handler, New TimeSpan(10000000), Nothing, "")
-                        End Using
-                    Case ".bz2"
-                        Using Bz2Stream As New BZip2OutputStream(OutputFile)
-                            StreamUtils.Copy(InputFile, Bz2Stream, Buffer, Handler, New TimeSpan(10000000), Nothing, "")
-                        End Using
-                    Case Else
-                        Throw New InvalidCastException("Unrecognized compression extension: " & IO.Path.GetExtension(DestFile))
-                End Select
+        Dim CompressionExt As String = If(Decompress, IO.Path.GetExtension(SourceFile), IO.Path.GetExtension(DestFile))
+
+        If SupportedExtensions.Contains(CompressionExt) Then
+            Using InputFile As New IO.FileStream(SourceFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
+                Using OutputFile As New IO.FileStream(DestFile, IO.FileMode.Create)
+                    If Decompress Then
+                        Dim InputStream As IO.Stream = Nothing
+                        Select Case CompressionExt
+                            Case ".gz"
+                                InputStream = New GZipInputStream(InputFile)
+                            Case ".bz2"
+                                InputStream = New BZip2InputStream(InputFile)
+                        End Select
+
+                        Try
+                            StreamUtils.Copy(InputStream, OutputFile, Buffer, Handler, New TimeSpan(10000000), Nothing, "")
+                        Finally
+                            InputStream.Dispose()
+                        End Try
+
+                    Else
+                        Dim OutputStream As IO.Stream = Nothing
+                        Select Case CompressionExt
+                            Case ".gz"
+                                OutputStream = New GZipOutputStream(OutputFile)
+                            Case ".bz2"
+                                OutputStream = New BZip2OutputStream(OutputFile)
+                        End Select
+
+                        Try
+                            StreamUtils.Copy(InputFile, OutputStream, Buffer, Handler, New TimeSpan(10000000), Nothing, "")
+                        Finally
+                            OutputStream.Dispose()
+                        End Try
+                    End If
+                End Using
             End Using
-        End Using
+        Else
+            Throw New InvalidOperationException(String.Format("No file to compress! Extensions {0} not recognized.", CompressionExt))
+        End If
 
         IO.File.SetLastWriteTimeUtc(DestFile, IO.File.GetLastWriteTimeUtc(SourceFile))
     End Sub
 
-    Sub DecompressFile(ByVal SourceFile As String, ByVal DestFile As String)
-        Using InputFile As New IO.FileStream(SourceFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
-            Using OutputFile As New IO.FileStream(DestFile, IO.FileMode.Create)
-                Using GZipStream As New GZipInputStream(InputFile)
-                    Dim Buffer(524228) As Byte
-                    StreamUtils.Copy(GZipStream, OutputFile, Buffer)
-                End Using
-            End Using
-        End Using
-    End Sub
-
 #If 0 Then
-    'Broken code: Microsoft didn't implement GZip correctly.
+    'Broken code: Microsoft didn't implement GZip correctly before .Net 4
     Sub CompressFile(ByVal SourceFile As String, ByVal DestFile As String)
         Using Input As New IO.FileStream(SourceFile, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
             Using outFile As IO.FileStream = IO.File.Create(DestFile)

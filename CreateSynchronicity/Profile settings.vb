@@ -38,8 +38,9 @@ Friend Module ProfileSetting
     Public Const PreviewOnly As String = "Preview only"
     Public Const SyncFolderAttributes As String = "Sync folder attributes"
     Public Const ErrorsLog As String = "Track errors separately"
-    Public Const AutoIncludeNewFolders As String = "Auto-include new folders"
+    Public Const AutoIncludeNewFolders As String = "Auto-include new folders" 'TODO: Not ready for mass use yet.
     Public Const LastModified As String = "Last modified"
+    Public Const Decompress As String = "Decompress"
     '</>
 
     'Disabled: would require keeping a list of modified files to work, since once a source file is deleted in the source, there's no way to tell when it had been last modified, and hence no way to calculate the appropriate deletion date.
@@ -93,7 +94,7 @@ NotInheritable Class ProfileHandler
         If GetSetting(Of String)(ProfileSetting.PostSyncAction) IsNot Nothing Then SetSetting(Of Boolean)(ProfileSetting.ErrorsLog, True)
 
         'Sanity checks: if no folders were included on the right due to automatic destination creation, select all folders
-        If GetSetting(Of Boolean)(ProfileSetting.MayCreateDestination, False) And GetSetting(Of String)(ProfileSetting.RightSubFolders) Is Nothing Then SetSetting(Of String)(ProfileSetting.RightSubFolders, "*")
+        If GetSetting(Of Boolean)(ProfileSetting.MayCreateDestination, False) And GetSetting(Of String)(ProfileSetting.RightSubFolders, "") = "" Then SetSetting(Of String)(ProfileSetting.RightSubFolders, "*")
     End Sub
 
     Function LoadConfigFile() As Boolean
@@ -108,6 +109,7 @@ NotInheritable Class ProfileHandler
                 Dim Param() As String = ConfigLine.Split(":".ToCharArray, 2)
                 If Param.Length < 2 Then
                     Interaction.ShowMsg(Translation.TranslateFormat("\INVALID_SETTING", ConfigLine))
+                    ProgramConfig.LogAppEvent("Invalid setting for profile '" & ProfileName & "': " & ConfigLine)
                 ElseIf Not Configuration.ContainsKey(Param(0)) Then
                     Configuration.Add(Param(0), Param(1))
                 End If
@@ -185,7 +187,7 @@ NotInheritable Class ProfileHandler
             End If
         Next
 
-        If Configuration.ContainsKey(ProfileSetting.CompressionExt) AndAlso Configuration(ProfileSetting.CompressionExt) <> "" Then
+        If GetSetting(Of String)(ProfileSetting.CompressionExt, "") <> "" Then
             If Array.IndexOf({".gz", ".bz2"}, Configuration(ProfileSetting.CompressionExt)) < 0 Then
                 IsValid = False
                 InvalidListing.Add("Unknown compression extension, or missing ""."":" & Configuration(ProfileSetting.CompressionExt))
@@ -285,19 +287,20 @@ NotInheritable Class ProfileHandler
 
     Sub LoadSubFoldersList(ByVal ConfigLine As String, ByRef Subfolders As Dictionary(Of String, Boolean))
         Subfolders.Clear()
-        Dim ConfigCheckedFoldersList As New List(Of String)(If(Configuration.ContainsKey(ConfigLine), Configuration(ConfigLine), "").Split(";"c))
+        Dim ConfigCheckedFoldersList As New List(Of String)(GetSetting(Of String)(ConfigLine, "").Split(";"c))
         ConfigCheckedFoldersList.RemoveAt(ConfigCheckedFoldersList.Count - 1) 'Removes the last, empty element
         ' Warning: The trailing comma can't be removed when generating the configuration string.
         ' Using StringSplitOptions.RemoveEmptyEntries would make no difference between ';' (root folder selected, no subfolders) and '' (nothing selected at all)
 
         For Each Dir As String In ConfigCheckedFoldersList
-            If Not Subfolders.ContainsKey(Dir) Then
-                If Dir.EndsWith("*") Then
-                    Subfolders.Add(Dir.Substring(0, Dir.Length - 1), True)
-                Else
-                    Subfolders.Add(Dir, False)
-                End If
+            Dim Recursive As Boolean = False
+
+            If Dir.EndsWith("*") Then
+                Recursive = True
+                Dir = Dir.Substring(0, Dir.Length - 1)
             End If
+
+            If Not Subfolders.ContainsKey(Dir) Then Subfolders.Add(Dir, Recursive)
         Next
     End Sub
 

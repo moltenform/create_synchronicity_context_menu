@@ -22,7 +22,7 @@ Friend Class MainForm
         ' Code (largely inspired) by U.N. Owen
         Dim WindowSettings As New List(Of String)(ProgramConfig.GetProgramSetting(Of String)(ProgramSetting.MainFormAttributes, "").Split(","c))
         Try
-            Dim Values As New List(Of Integer) : WindowSettings.ForEach(Sub(Elem) Values.Add(CInt(Elem)))
+            Dim Values As New List(Of Integer) : WindowSettings.ForEach(Sub(Elem) Values.Add(CInt(Elem))) 'FIXME: Lambdas
             If Values.Count = 4 AndAlso Values.TrueForAll(Function(Value As Integer) Value > 0 And Value < 5000) Then
                 Me.Location = New Drawing.Point(Values(0), Values(1))
                 Me.Size = New Drawing.Size(Values(2), Values(3))
@@ -142,7 +142,10 @@ Friend Class MainForm
         If e.Item = 0 Then
             e.CancelEdit = True
             Dim SettingsForm As New SettingsForm(e.Label, ProfilesGroups)
-            SettingsForm.ShowDialog()
+
+            'Since this happens while the label is being edited, the normal blinking mecanisms that brings the modal dialog to front when the owner window is clicked doesn't work.
+            'Explicitly specifying the owner forces the modal dialog to always be on top of the caller.
+            SettingsForm.ShowDialog(Me) 'This is especially important if users minimize CS while editing the label - in this case, returning to CS shows a blocked main windows, and users must loop through all windows (Ctrl+Tab) to reach the settings dialog.
         Else
             If Not Profiles(Actions.Items(e.Item).Text).Rename(e.Label) Then e.CancelEdit = True
         End If
@@ -175,6 +178,9 @@ Friend Class MainForm
     Private Sub ActionsMenu_Opening(ByVal sender As Object, ByVal e As System.ComponentModel.CancelEventArgs) Handles ActionsMenu.Opening
         Dim FileSize As Integer = If(IO.File.Exists(Profiles(CurrentProfile()).LogPath), CInt(Utilities.GetSize(Profiles(CurrentProfile()).LogPath) / 1000), 0)
         ClearLogMenuItem.Text = String.Format(ClearLogMenuItem.Tag.ToString, FileSize)
+
+        'Forbid syncing without at least one preview, at least in non-expert mode
+        SynchronizeMenuItem.Visible = ProgramConfig.GetProgramSetting(Of Boolean)(ProgramSetting.ExpertMode, False) OrElse Profiles(CurrentProfile).GetLastRun() <> ScheduleInfo.DATE_NEVER
     End Sub
 
     Private Sub PreviewMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles PreviewMenuItem.Click
@@ -251,10 +257,12 @@ Friend Class MainForm
     Sub SetView(ByVal Offset As Integer)
         CurView = (CurView + Offset) Mod Views.Length
 #If CONFIG = "Linux" Then
-        CurView = If(CurView = 0, CurView + 1, CurView) 'Exclude tile view.
+        If CurView = 0 Then CurView = 1 'Exclude tile view.
 #End If
 
         Actions.View = Views(CurView)
+
+        ReloadProfilesList()
         Actions.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent)
     End Sub
 
@@ -278,7 +286,7 @@ Friend Class MainForm
             NewItem.Group = Actions.Groups(1)
             NewItem.ImageIndex = Profile.GetSetting(Of Integer)(ProfileSetting.Method, ProfileSetting.DefaultMethod) + If(Profile.Scheduler.Frequency = ScheduleInfo.Freq.Never, 0, 4)
             NewItem.SubItems.Add(Profile.FormatMethod()).ForeColor = Drawing.Color.DarkGray
-            NewItem.SubItems.Add(Profile.FormatLastRun("D3"))
+            If Actions.View = View.Details Then NewItem.SubItems.Add(Profile.FormatLastRun("D3")) 'Fix #3515300
 
             Dim GroupName As String = Profile.GetSetting(Of String)(ProfileSetting.Group, "")
             If GroupName <> "" Then

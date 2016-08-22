@@ -90,6 +90,7 @@ echo (**) Building zip files
 	7z a "%BUILD%\%FILENAME%-%TAG%.zip" "%NAME%.exe" "Release notes.txt" "COPYING" "languages\*"
 	7z a "%BUILD%\%FILENAME%-%TAG%-Extensions.zip" "compress.dll" "ICSharpCode.SharpZipLib.dll"
 	7z a "%BUILD%\%FILENAME%-%TAG%-Scripts.zip" "scripts\*"
+	copy "Release notes.txt" "%BUILD%\release-notes.txt" 
 	cd "%ROOT%"
 
 	cd "%BIN%\Debug"

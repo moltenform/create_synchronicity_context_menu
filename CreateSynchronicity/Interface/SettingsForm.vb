@@ -17,6 +17,9 @@ Friend Class SettingsForm
     Dim PrevLeft As String = "-1" 'Initiate to an invalid path value to force reloading.
     Dim PrevRight As String = "-1" 'These values are used to check whether the folder tree should be reloaded.
 
+    Dim ExcludedFolderPatterns As New List(Of FileNamePattern)
+    ReadOnly EXCLUDED_FORECOLOR As Drawing.Color = Drawing.Color.LightGray
+
     'Note:
     'The list called Handler.(left|right)CheckedNodes contains pathes not ending with "*", associated with booleans indicating whether all subfolders /path/ are to be synced.
     'The boolean value is stored as a * appended at the end of the file name.
@@ -35,6 +38,8 @@ Friend Class SettingsForm
     Public Sub New(ByVal Name As String, ByVal Groups As List(Of String))
         ' This call is required by the Windows Form Designer.
         InitializeComponent()
+
+        ' Add any initialization after the InitializeComponent() call.
 #If CONFIG = "Linux" Then
         Me.FormBorderStyle = Windows.Forms.FormBorderStyle.Sizable
 #End If
@@ -44,8 +49,8 @@ Friend Class SettingsForm
         End If
 
         GroupNameBox.Items.AddRange(Groups.ToArray)
+        'CType(ExcludedFoldersLabel.DropDown, ToolStripDropDownMenu).ShowImageMargin = False
 
-        ' Add any initialization after the InitializeComponent() call.
         Handler = New ProfileHandler(Name)
     End Sub
 
@@ -61,7 +66,7 @@ Friend Class SettingsForm
     End Sub
 
     Private Sub SettingsForm_Shown(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Shown
-        ReloadTrees(True) 'Loading happens after showing the form.
+        ReloadTrees(True, , False) 'Loading happens after showing the form. Do not automatically check the root node.
         RightView.Sorted = True : LeftView.Sorted = True
     End Sub
 
@@ -154,21 +159,12 @@ Friend Class SettingsForm
         End If
     End Sub
 
-    Private Sub CouldShowTip(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RightView.MouseEnter, LeftView.MouseEnter, FromTextBox.GotFocus, ToTextBox.GotFocus, FromTextBox.MouseEnter, ToTextBox.MouseEnter, LRMirrorMethodOption.MouseEnter, LRIncrementalMethodOption.MouseEnter, TwoWaysIncrementalMethodOption.MouseEnter, IncludedTypesTextBox.MouseEnter, ExcludedTypesTextBox.MouseEnter
+    Private Sub CouldShowTip(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RightView.MouseEnter, LeftView.MouseEnter, FromTextBox.GotFocus, ToTextBox.GotFocus, FromTextBox.MouseEnter, ToTextBox.MouseEnter, LRMirrorMethodOption.MouseEnter, LRIncrementalMethodOption.MouseEnter, TwoWaysIncrementalMethodOption.MouseEnter, IncludedTypesTextBox.MouseEnter, ExcludedTypesTextBox.MouseEnter, StrictDateComparisonOption.MouseEnter
         Interaction.ShowToolTip(CType(sender, Control))
     End Sub
 
-    Private Sub ShouldHideTip(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RightView.MouseLeave, LeftView.MouseLeave, FromTextBox.LostFocus, ToTextBox.LostFocus, FromTextBox.MouseLeave, ToTextBox.MouseLeave, LRMirrorMethodOption.MouseLeave, LRIncrementalMethodOption.MouseLeave, TwoWaysIncrementalMethodOption.MouseLeave, IncludedTypesTextBox.MouseLeave, ExcludedTypesTextBox.MouseLeave
+    Private Sub ShouldHideTip(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RightView.MouseLeave, LeftView.MouseLeave, FromTextBox.LostFocus, ToTextBox.LostFocus, FromTextBox.MouseLeave, ToTextBox.MouseLeave, LRMirrorMethodOption.MouseLeave, LRIncrementalMethodOption.MouseLeave, TwoWaysIncrementalMethodOption.MouseLeave, IncludedTypesTextBox.MouseLeave, ExcludedTypesTextBox.MouseLeave, StrictDateComparisonOption.MouseLeave
         Interaction.HideToolTip(CType(sender, Control))
-    End Sub
-
-    Private Sub Bottom_Showtag(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles StrictDateComparisonOption.MouseEnter
-        'BottomDescLabel.Text = CStr(CType(sender, Control).Tag)
-        BottomDescLabel.Text = CStr(StrictDateComparisonOption.Tag)
-    End Sub
-
-    Private Sub Bottom_HideTag(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles StrictDateComparisonOption.MouseLeave
-        BottomDescLabel.Text = ""
     End Sub
 
     Private Sub AfterExpand(ByVal sender As Object, ByVal e As System.Windows.Forms.TreeViewEventArgs) Handles LeftView.AfterExpand, RightView.AfterExpand
@@ -180,6 +176,12 @@ Friend Class SettingsForm
                     Dim NewNode As TreeNode = Node.Nodes.Add(GetFileOrFolderName(Dir))
                     NewNode.Checked = (Node.ToolTipText = "*" And Node.Checked)
                     NewNode.ToolTipText = Node.ToolTipText
+
+                    If Node.ForeColor <> EXCLUDED_FORECOLOR Then
+                        GrayOutIfExcluded(NewNode)
+                    Else
+                        GrayOut(NewNode)
+                    End If
                 Next
             Catch Ex As Exception 'Typically UnauthorizedAccess exceptions.
 #If DEBUG Then
@@ -222,7 +224,7 @@ Friend Class SettingsForm
         'When the CheckBoxes' display is switched on, the checked property is not taken into account for the display.
         'Therefore, re-check the tree (if it has already been loaded)
         If RightView.CheckBoxes AndAlso RightView.Nodes.Count > 0 Then
-            LoadCheckState(RightView, Handler.RightCheckedNodes) 'InhibitAutoCheck? -> Enabled in LoadCheckState anyway.
+            LoadCheckState(RightView, Handler.RightCheckedNodes, True) 'InhibitAutoCheck? -> Enabled in LoadCheckState anyway.
         End If
     End Sub
 
@@ -232,6 +234,12 @@ Friend Class SettingsForm
 
     Private Sub MoreLabel_LinkClicked(ByVal sender As System.Object, ByVal e As System.Windows.Forms.MouseEventArgs) Handles MoreLabel.MouseClick
         ExpertMenu.Show(MoreLabel, e.Location)
+    End Sub
+
+    Private Sub ExcludedTypesTextBox_Validated(sender As Object, e As EventArgs) Handles ExcludedTypesTextBox.Validated
+        LoadExcludedFolderPatterns()
+        If (LeftView.Nodes.Count > 0) Then GrayOutIfExcluded(LeftView.Nodes(0))
+        If (RightView.Nodes.Count > 0) Then GrayOutIfExcluded(RightView.Nodes(0))
     End Sub
 #End Region
 
@@ -345,7 +353,7 @@ Friend Class SettingsForm
         End If
     End Sub
 
-    Private Sub ReloadTrees(ByVal AllowFullReload As Boolean, Optional ByVal ForceRight As Boolean = False)
+    Private Sub ReloadTrees(ByVal AllowFullReload As Boolean, Optional ByVal ForceRight As Boolean = False, Optional ByVal AutoCheckRoot As Boolean = True)
         ReloadButton.Enabled = False
         SaveButton.Enabled = False
         Loading.Visible = True
@@ -356,10 +364,10 @@ Friend Class SettingsForm
         Cleanup_Paths()
         'Unless FullReload is true, and no path has changed, only the trees where paths have changed are reloaded.
         If FullReload Or PrevLeft <> FromTextBox.Text Then
-            LoadTree(LeftView, FromTextBox.Text, Handler.LeftCheckedNodes)
+            LoadTree(LeftView, FromTextBox.Text, Handler.LeftCheckedNodes, AutoCheckRoot)
         End If
         If FullReload Or PrevRight <> ToTextBox.Text Or ForceRight Then
-            LoadTree(RightView, ToTextBox.Text, Handler.RightCheckedNodes, CreateDestOption.Checked)
+            LoadTree(RightView, ToTextBox.Text, Handler.RightCheckedNodes, AutoCheckRoot, CreateDestOption.Checked)
         End If
 
         Loading.Visible = False
@@ -371,7 +379,7 @@ Friend Class SettingsForm
         CheckSettings()
     End Sub
 
-    Private Sub LoadTree(ByVal Tree As TreeView, ByVal OriginalPath As String, ByVal CheckedNodes As Dictionary(Of String, Boolean), Optional ByVal DynamicDest As Boolean = False)
+    Private Sub LoadTree(ByVal Tree As TreeView, ByVal OriginalPath As String, ByVal CheckedNodes As Dictionary(Of String, Boolean), ByVal AutoCheckRoot As Boolean, Optional ByVal DynamicDest As Boolean = False)
         Tree.Nodes.Clear()
 
         Dim Path As String = ProfileHandler.TranslatePath(OriginalPath) & ProgramSetting.DirSep
@@ -390,7 +398,7 @@ Friend Class SettingsForm
 
                     'Expanding root is crucial here, since children were already added, but not their subchildren, and expand only works on nodes that already have subchildren.
                     Tree.Nodes(0).Expand()
-                    LoadCheckState(Tree, CheckedNodes)
+                    LoadCheckState(Tree, CheckedNodes, AutoCheckRoot)
                 Catch Ex As Exception 'Root folder cannot be read
                     Tree.Nodes.Clear()
                     Tree.Enabled = False
@@ -401,14 +409,17 @@ Friend Class SettingsForm
         If Not Tree.Enabled Then Tree.BackColor = Drawing.Color.LightGray
     End Sub
 
-    Private Sub LoadCheckState(ByVal Tree As TreeView, ByVal CheckedNodes As Dictionary(Of String, Boolean))
+    Private Sub LoadCheckState(ByVal Tree As TreeView, ByVal CheckedNodes As Dictionary(Of String, Boolean), ByVal AutoCheckRoot As Boolean)
         Dim BaseNode As TreeNode = Tree.Nodes(0)
-        If CheckedNodes.Count = 0 Then CheckedNodes.Add("", True)
+
+        If CheckedNodes.Count = 0 And AutoCheckRoot Then CheckedNodes.Add("", True) 'Automatically check the root node; useful when loading a new path, but must not happen if all folders were intentionally excluded.
         InhibitAutocheck = True
         For Each CheckedPath As KeyValuePair(Of String, Boolean) In CheckedNodes
             CheckAccordingToPath(BaseNode, New List(Of String)(CheckedPath.Key.Split(ProgramSetting.DirSep)), CheckedPath.Value)
         Next
         InhibitAutocheck = False
+
+        GrayOutIfExcluded(BaseNode)
     End Sub
 
     Private Sub CheckAccordingToPath(ByVal BaseNode As TreeNode, ByRef Path As List(Of String), ByVal FullCheck As Boolean)
@@ -433,6 +444,26 @@ Friend Class SettingsForm
             Next
         End If
     End Sub
+
+    Private Sub GrayOut(ByVal Node As TreeNode)
+        Node.ForeColor = EXCLUDED_FORECOLOR
+
+        For Each SubNode As TreeNode In Node.Nodes
+            GrayOut(SubNode)
+        Next
+    End Sub
+
+    Private Sub GrayOutIfExcluded(ByVal Node As TreeNode)
+        If FileNamePattern.MatchesPattern(Node.FullPath, ExcludedFolderPatterns) Then
+            GrayOut(Node)
+        Else
+            Node.ForeColor = Drawing.Color.Black
+
+            For Each SubNode As TreeNode In Node.Nodes
+                GrayOutIfExcluded(SubNode)
+            Next
+        End If
+    End Sub
 #End Region
 
 #Region " Settings Handling "
@@ -453,7 +484,10 @@ Friend Class SettingsForm
         Handler.CopySetting(ProfileSetting.Checksum, ChecksumOption.Checked, LoadToForm)
         Handler.CopySetting(ProfileSetting.CheckFileSize, CheckFileSizeOption.Checked, LoadToForm)
         Handler.CopySetting(ProfileSetting.Group, GroupNameBox.Text, LoadToForm)
+        'Handler.CopySetting(ProfileSetting.ExcludedFolders, ExcludedFoldersBox.Text, LoadToForm)
         'Hidden settings are not added here
+
+        LoadExcludedFolderPatterns() 'Load excluded folder patterns from UI (ExcludedTypesTextBox.Text) and settings dictionary (ExcludedFolders)
 
         'Note: Behaves correctly when no radio button is checked, although CopyAllFiles is unchecked.
         Dim Restrictions As Integer = (If(CopyAllFilesCheckBox.Checked, 0, 1) * (If(IncludeFilesOption.Checked, 1, 0) + 2 * If(ExcludeFilesOption.Checked, 1, 0)))
@@ -509,6 +543,12 @@ Friend Class SettingsForm
             End If
             SetRootPathDisplay(True)
         End If
+    End Sub
+
+    Private Sub LoadExcludedFolderPatterns()
+        ExcludedFolderPatterns = New List(Of FileNamePattern)
+        FileNamePattern.LoadPatternsList(ExcludedFolderPatterns, ExcludedTypesTextBox.Text, True, ProgramSetting.ExcludedFolderPrefix)
+        FileNamePattern.LoadPatternsList(ExcludedFolderPatterns, Handler.GetSetting(Of String)(ProfileSetting.ExcludedFolders, ""), True, "") 'Not shown in the UI.
     End Sub
 
     Private Shared Function Cleanup(ByVal Path As String) As String

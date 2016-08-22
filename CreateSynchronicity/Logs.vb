@@ -95,7 +95,7 @@ Friend NotInheritable Class LogHandler
         LogW.WriteLine("{0}: {1}{2}", Translation.Translate("\LEFT"), Left, LineSeparator)
         LogW.WriteLine("{0}: {1}{2}", Translation.Translate("\RIGHT"), Right, LineSeparator)
         LogW.WriteLine("{0} {1}/{2}" & LineSeparator, Translation.Translate("\DONE"), Status.ActionsDone, Status.TotalActionsCount)
-        LogW.WriteLine("{0} {1}{2}", Translation.Translate("\ELAPSED"), TimeSpan.FromMilliseconds(Status.TimeElapsed.TotalMilliseconds - Status.TimeElapsed.Milliseconds).ToString, LineSeparator)
+        LogW.WriteLine("{0} {1}{2}", Translation.Translate("\ELAPSED"), TimeSpan.FromSeconds(CInt(Status.TimeElapsed.Seconds)).ToString, LineSeparator)
 
         If Status.Failed And (Status.FailureMsg IsNot Nothing) Then
             LogW.WriteLine(Status.FailureMsg)

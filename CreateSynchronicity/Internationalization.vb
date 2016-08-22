@@ -15,7 +15,7 @@ Friend NotInheritable Class LanguageHandler
     End Structure
 
     'Renames : non-english file name -> english file name
-    Private Shared Renames As New Dictionary(Of String, String)(StringComparer.InvariantCultureIgnoreCase) From {{"francais", "french"}, {"deutsch", "german"}}
+    Private Shared Renames As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase) From {{"francais", "french"}, {"deutsch", "german"}}
 
     Private Shared Function NewFilename(ByVal OldLanguageName As String) As String
         Return If(Renames.ContainsKey(OldLanguageName), Renames(OldLanguageName), OldLanguageName)
@@ -181,7 +181,7 @@ Friend NotInheritable Class LanguageHandler
         End If
     End Sub
 
-#If DEBUG Then
+#If Debug And 0 Then
     Public Shared Sub EnumerateCultures()
         Dim Builder As New Text.StringBuilder
         For Each Culture As Globalization.CultureInfo In Globalization.CultureInfo.GetCultures(Globalization.CultureTypes.AllCultures)

@@ -1,5 +1,5 @@
 amharic:4
-bulgarian:10
+bulgarian:0
 chinese (simplified):9
 chinese (traditional):4
 czech:0
@@ -18,7 +18,7 @@ japanese:4
 korean:9
 polish:0
 portuguese:0
-russian:14
+russian:0
 slovene:0
 spanish:0
 swedish:0

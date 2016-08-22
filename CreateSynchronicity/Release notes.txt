@@ -4,7 +4,7 @@ Languages:         English, French, German, Portuguese, Italian, Spanish,
                    Swedish, Dutch, Czech, Indonesian, Hebrew, Danish, Russian,
                    Estonian, Polish, Bulgarian, Korean, Chinese (Simplified),
                    Hungarian, Chinese (Traditional), Amharic, Greek, Turkish,
-                   Japanese, Slovene
+                   Japanese, Slovene, Norwegian
 Created on:        June 3, 2009
 Created by:        Clément Pit--Claudel (Create Software)
 Special thanks:    Mauricio Leyzaola, Christian Eibler, Alexander Barnes,
@@ -17,7 +17,14 @@ Special thanks:    Mauricio Leyzaola, Christian Eibler, Alexander Barnes,
                    Thomas (Grraver), Orestes Panagoulas, Troy Schnack,
                    Samuel Fernmo, Carl-Gustav Werner, Masahiko Kuroiwa,
                    Brenden Veljacich, Shawn McTear, Eugene Dreyer,
-                   Terje Ballangby, Tim Naylor, Geoffroy Ménard, Rick Weinstein
+                   Terje Ballangby, Tim Naylor, Geoffroy Ménard, Rick Weinstein,
+                   Ira Bashkow, Ron Aronica, Sela (www.SelaGroup.com),
+                   Slobodan Dijaković, Gavin W. F. Smith, Christine Aznar,
+                   Richard Duda, David Connolly, G. W. Daly, Tom & Kathi Brown,
+                   Felipe Esquivel, Dimitri De Franciscis, Robert Bleiker,
+                   Trevor Patrick Photography, George Spark, Jack Fowler, 
+                   Bert Byfield, Michael Boiger, atomMan， Steffen Hartmann,
+                   Roy Hawk
 Patches:           U.N. Owen
 Translations:      Clément Pit--Claudel, Florian Haag, André Modesto, Teo Rojo,
                    Pedro Silva, Marco Medri, Jaime Roquero, Hampus Bengtsson,
@@ -25,7 +32,9 @@ Translations:      Clément Pit--Claudel, Florian Haag, André Modesto, Teo Rojo
                    Chiapperini, Gush Katif Laad, Bjørn Karlstrøm, Andres Aule,
                    S. G. Park, Marco C., Marco Salvagno, Lajos Toldy, Elfalem
                    Alemu, Juan Pablo Ahumada, Stathis Grigoriadis, Tom Szabo,
-                   Masahiko Kuroiwa, Romel Vera, Tomaz Valh, Carl-Gustav Werner
+                   Masahiko Kuroiwa, Romel Vera, Tomaz Valh, Carl-Gustav Werner,
+                   Ademas Pramuatmaja, Jim Leirvik, Sebastià Sureda, Matej Sur,
+                   Laurynas Braskus (ITDC)
 
 * Technical information
 License:           GNU GPL v3 or later (see "COPYING")
@@ -40,9 +49,17 @@ SVN Server:        https://synchronicity.svn.sourceforge.net/svnroot/synchronici
 * Change Log
 NEW: New feature; FIX: Bug fixed; UPD: Update/Improvement; !: Important modification, SYN: Synopsis 
 --------------------------
+--- In future releases --- 
+Oct. 28, 2012 - UPD: Folders excluded using regular expressions are now grayed-out in folder tree views.
+Oct. 27, 2012 - FIX: Enabling look-backwards date filters forced replication empty directories, even if it was manually disabled.
+Oct. 10, 2012 - NEW: !Catalan translation, by Sebastià Sureda. Gràcies!
+Sep. 05, 2012 - UPD: Run Create Synchronicity immediately after the setup. 
+Aug. 29, 2012 - UPD: Add a percentage progress indicator in task bar and window title.
+Jun. 27, 2012 - FIX: Profiles name overlapping in some cases (#3515300).
+May. 26, 2012 - NEW: !Norwegian translation, by Jim Leirvik. 
 
 --- Version 6.0 ---
-Mer. 11, 2012 - SYN: Create Synchronicity 6.0 comes with prettier logs, a much faster preview list, 8 new expert settings, 6 new languages, post-sync scripts, and lots of updates and fixes. 
+Mar. 11, 2012 - SYN: Create Synchronicity 6.0 comes with prettier logs, a much faster preview list, 8 new expert settings, 6 new languages, post-sync scripts, and lots of updates and fixes. 
 Feb. 21, 2012 - UPD: Pressing alt and double-clicking an entry in the preview list now opens the corresponding destination file.
 Feb. 14, 2012 - FIX: "File not found" exception upon start-up in some rare cases.
 Feb. 06, 2012 - UPD: Stop updating speed while copying a large file.

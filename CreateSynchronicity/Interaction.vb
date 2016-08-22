@@ -44,7 +44,7 @@ Friend Module Interaction
     End Sub
 
     Public Sub ShowToolTip(ByVal Ctrl As Control)
-        Dim T As TreeView = TryCast(Ctrl, TreeView)
+        Dim T As TreeView = TryCast(Ctrl, TreeView) 'Exit if Ctrl is a TreeView without checkboxes.
         If T IsNot Nothing AndAlso Not T.CheckBoxes Then Exit Sub
 
         Dim Offset As Integer = If(TypeOf Ctrl Is RadioButton Or TypeOf Ctrl Is CheckBox, 12, 1)
