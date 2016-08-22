@@ -978,8 +978,8 @@ Friend Class SynchronizeForm
         If SourceFATTime < DestFATTime AndAlso (Not Handler.GetSetting(Of Boolean)(ProfileSetting.StrictMirror, False)) Then Return False
 
         'User-enabled checks
-        If Handler.GetSetting(Of Boolean)(ProfileSetting.Checksum, False) AndAlso Md5(AbsSource) <> Md5(AbsDest) Then Return True
         If Handler.GetSetting(Of Boolean)(ProfileSetting.CheckFileSize, False) AndAlso Utilities.GetSize(AbsSource) <> Utilities.GetSize(AbsDest) Then Return True
+        If Handler.GetSetting(Of Boolean)(ProfileSetting.Checksum, False) AndAlso Md5(AbsSource) <> Md5(AbsDest) Then Return True
 
         If Handler.GetSetting(Of Boolean)(ProfileSetting.StrictDateComparison, True) Then
             If SourceFATTime = DestFATTime Then Return False
