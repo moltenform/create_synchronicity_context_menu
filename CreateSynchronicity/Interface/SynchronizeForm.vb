@@ -541,6 +541,7 @@ Friend Class SynchronizeForm
 
         Dim Source As String = If(Side = SideOfSource.Left, LeftRootPath, RightRootPath)
         Dim Destination As String = If(Side = SideOfSource.Left, RightRootPath, LeftRootPath)
+        Dim WarnIfDeletingNonEmptyFolder As Boolean = Handler.GetSetting(Of Boolean)(ProfileSetting.WarnIfDeletingNonEmptyFolder, False)
 
         For Each Entry As SyncingItem In SyncingList
             If Entry.Side <> Side Then Continue For
@@ -582,7 +583,7 @@ Friend Class SynchronizeForm
                                 If RemainingFiles.Length > 0 Or RemainingFolders.Length > 0 Then Log.LogInfo(String.Format("Do_Tasks: Removing non-empty folder {0} ({1}) ({2})", SourcePath, String.Join(", ", RemainingFiles), String.Join(", ", RemainingFolders)))
 #End If
                                 Try
-                                    IO.Directory.Delete(SourcePath, True)
+                                    IO.Directory.Delete(SourcePath, Not WarnIfDeletingNonEmptyFolder)
                                 Catch ex As Exception
                                     Dim DirInfo As New IO.DirectoryInfo(SourcePath)
                                     DirInfo.Attributes = IO.FileAttributes.Directory 'Using "DirInfo.Attributes = IO.FileAttributes.Normal" does just the same, and actually sets DirInfo.Attributes to "IO.FileAttributes.Directory"

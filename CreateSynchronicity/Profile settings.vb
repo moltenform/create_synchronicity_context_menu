@@ -40,6 +40,7 @@ Friend Module ProfileSetting
     Public Const AutoIncludeNewFolders As String = "Auto-include new folders" 'TODO: Not ready for mass use yet.
     Public Const LastModified As String = "Last modified"
     Public Const Decompress As String = "Decompress"
+    Public Const WarnIfDeletingNonEmptyFolder As String = "Warn if deleting non-empty folder"
     '</>
 
     'Disabled: would require keeping a list of modified files to work, since once a source file is deleted in the source, there's no way to tell when it had been last modified, and hence no way to calculate the appropriate deletion date.
