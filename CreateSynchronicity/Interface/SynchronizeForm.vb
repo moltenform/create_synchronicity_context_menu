@@ -38,6 +38,7 @@ Friend Class SynchronizeForm
 
     Private Delegate Sub StepCompletedCall(ByVal Id As StatusData.SyncStep)
     Private Delegate Sub SetIntCall(ByVal Id As StatusData.SyncStep, ByVal Max As Integer)
+    Private Const SecondsInexactTimeComparison As Integer = 4
 
     Friend Event SyncFinished(ByVal Name As String, ByVal Completed As Boolean)
 
@@ -969,11 +970,6 @@ Friend Class SynchronizeForm
         Dim DestFATTime As Date = NTFSToFATTime(IO.File.GetLastWriteTimeUtc(AbsDest))
         Log.LogInfo(String.Format("SourceIsMoreRecent: S:({0}, {1}); D:({2}, {3})", Interaction.FormatDate(IO.File.GetLastWriteTimeUtc(AbsSource)), Interaction.FormatDate(SourceFATTime), Interaction.FormatDate(IO.File.GetLastWriteTimeUtc(AbsDest)), Interaction.FormatDate(DestFATTime)))
 
-        If Handler.GetSetting(Of Boolean)(ProfileSetting.FuzzyDstCompensation, False) Then
-            Dim HoursDiff As Integer = CInt((SourceFATTime - DestFATTime).TotalHours)
-            If Math.Abs(HoursDiff) = 1 Then DestFATTime = DestFATTime.AddHours(HoursDiff)
-        End If
-
         'StrictMirror is disabled in constructor if Method != LRMirror
         If SourceFATTime < DestFATTime AndAlso (Not Handler.GetSetting(Of Boolean)(ProfileSetting.StrictMirror, False)) Then Return False
 
@@ -984,7 +980,11 @@ Friend Class SynchronizeForm
         If Handler.GetSetting(Of Boolean)(ProfileSetting.StrictDateComparison, True) Then
             If SourceFATTime = DestFATTime Then Return False
         Else
-            If Math.Abs((SourceFATTime - DestFATTime).TotalSeconds) <= 4 Then Return False 'Note: NTFSToFATTime introduces additional fuzziness (justifies the <= ('=')).
+            If Math.Abs((SourceFATTime - DestFATTime).TotalSeconds) <= SecondsInexactTimeComparison Then Return False 'Note: NTFSToFATTime introduces additional fuzziness (justifies the <= ('=')).
+
+            'Daylight savings time can introduce an offset of 1 hour
+            If Math.Abs((SourceFATTime.AddHours(1) - DestFATTime).TotalSeconds) <= SecondsInexactTimeComparison Then Return False 'Note: NTFSToFATTime introduces additional fuzziness (justifies the <= ('=')).
+            If Math.Abs((SourceFATTime.AddHours(-1) - DestFATTime).TotalSeconds) <= SecondsInexactTimeComparison Then Return False 'Note: NTFSToFATTime introduces additional fuzziness (justifies the <= ('=')).
         End If
         Log.LogInfo("SourceIsMoreRecent: Filetimes differ")
 

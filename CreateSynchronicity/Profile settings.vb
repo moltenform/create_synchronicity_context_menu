@@ -26,7 +26,6 @@ Friend Module ProfileSetting
     Public Const CompressionExt As String = "Compress"
     Public Const Group As String = "Group"
     Public Const CheckFileSize As String = "Check file size"
-    Public Const FuzzyDstCompensation As String = "Fuzzy DST compensation"
     Public Const Checksum As String = "Checksum"
 
     'Next settings are hidden, not automatically appended to config files.
