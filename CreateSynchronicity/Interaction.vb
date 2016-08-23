@@ -129,7 +129,8 @@ Friend NotInheritable Class SyncingListSorter
             Case 0
                 Result = xs.Type.CompareTo(ys.Type)
             Case 1
-                Result = If(xs.Action = ys.Action, xs.IsUpdate.CompareTo(ys.IsUpdate), xs.Action.CompareTo(ys.Action))
+                Dim CompareTypeOfUpdate As Integer = (xs.Update <> TypeOfUpdate.None).CompareTo(ys.Update <> TypeOfUpdate.None)
+                Result = If(xs.Action = ys.Action, CompareTypeOfUpdate, xs.Action.CompareTo(ys.Action))
             Case 2
                 Result = xs.Side.CompareTo(ys.Side)
             Case 3

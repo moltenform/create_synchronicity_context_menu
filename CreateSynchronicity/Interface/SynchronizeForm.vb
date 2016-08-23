@@ -432,7 +432,7 @@ Friend Class SynchronizeForm
         ' This part computes acceptable defaut values for column widths, since using VirtualMode prevents from resizing based on actual values.
         ' This part requires that VirtualMode be set to False.
         Dim i1 As New SyncingItem() With {.Action = TypeOfAction.Copy, .Side = SideOfSource.Left, .Type = TypeOfItem.File, .Path = "".PadLeft(260)}
-        Dim i2 As New SyncingItem() With {.Action = TypeOfAction.Copy, .Side = SideOfSource.Right, .Type = TypeOfItem.File, .IsUpdate = True}
+        Dim i2 As New SyncingItem() With {.Action = TypeOfAction.Copy, .Side = SideOfSource.Right, .Type = TypeOfItem.File, .Update = TypeOfUpdate.ReplaceWithNewerFile}
         Dim i3 As New SyncingItem() With {.Action = TypeOfAction.Delete, .Side = SideOfSource.Right, .Type = TypeOfItem.Folder}
 
         PreviewList.Items.Add(i1.ToListViewItem)
@@ -625,8 +625,8 @@ Friend Class SynchronizeForm
         Next
     End Sub
 
-    Private Sub AddToSyncingList(ByVal Path As String, ByVal Type As TypeOfItem, ByVal Side As SideOfSource, ByVal Action As TypeOfAction, ByVal IsUpdate As Boolean)
-        Dim Entry As New SyncingItem With {.Path = Path, .Type = Type, .Side = Side, .Action = Action, .IsUpdate = IsUpdate, .RealId = SyncingList.Count}
+    Private Sub AddToSyncingList(ByVal Path As String, ByVal Type As TypeOfItem, ByVal Side As SideOfSource, ByVal Action As TypeOfAction, ByVal Update As TypeOfUpdate)
+        Dim Entry As New SyncingItem With {.Path = Path, .Type = Type, .Side = Side, .Action = Action, .Update = Update, .RealId = SyncingList.Count}
 
         SyncingList.Add(Entry)
         If Entry.Action <> TypeOfAction.Delete Then AddValidFile(If(Type = TypeOfItem.Folder, Entry.Path, GetCompressedName(Entry.Path)))
@@ -696,6 +696,7 @@ Friend Class SynchronizeForm
     Private Sub SearchForChanges(ByVal Folder As String, ByVal Recursive As Boolean, ByVal Context As SyncingContext)
         Dim SourceFolder As String = CombinePathes(Context.SourceRootPath, Folder)
         Dim DestinationFolder As String = CombinePathes(Context.DestinationRootPath, Folder)
+        Dim IsStrictMirror As Boolean = Handler.GetSetting(Of Boolean)(ProfileSetting.StrictMirror, False)
 
         'Exit on excluded folders (and optionally on hidden ones).
         If Not HasAcceptedDirname(Folder) OrElse IsExcludedSinceHidden(SourceFolder) OrElse IsSymLink(SourceFolder) Then Exit Sub
@@ -707,7 +708,7 @@ Friend Class SynchronizeForm
         Dim IsNewFolder As Boolean = Not IO.Directory.Exists(DestinationFolder)
         Dim ShouldUpdateFolder As Boolean = IsNewFolder OrElse AttributesChanged(SourceFolder, DestinationFolder)
         If ShouldUpdateFolder Then
-            AddToSyncingList(Folder, TypeOfItem.Folder, Context.Source, TypeOfAction.Copy, Not IsNewFolder)
+            AddToSyncingList(Folder, TypeOfItem.Folder, Context.Source, TypeOfAction.Copy, If(IsNewFolder, TypeOfUpdate.None, TypeOfUpdate.ReplaceWithNewerFile))
             Log.LogInfo(String.Format("SearchForChanges: {0} ""{1}"" ""{2}"" ({3})", If(IsNewFolder, "[New folder]", "[Updated folder]"), SourceFolder, DestinationFolder, Folder))
         Else
             AddValidFile(Folder)
@@ -726,7 +727,16 @@ Friend Class SynchronizeForm
                         Dim RelativeFilePath As String = SourceFile.Substring(Context.SourceRootPath.Length)
 
                         If IsNewFile OrElse SourceIsMoreRecent(SourceFile, DestinationFile) Then
-                            AddToSyncingList(RelativeFilePath, TypeOfItem.File, Context.Source, TypeOfAction.Copy, Not IsNewFile)
+                            Dim UpdateType As TypeOfUpdate = If(IsNewFile, TypeOfUpdate.None, TypeOfUpdate.ReplaceWithNewerFile)
+                            If Not IsNewFile AndAlso IsStrictMirror Then
+                                Dim SourceFATTime As Date = NTFSToFATTime(IO.File.GetLastWriteTimeUtc(SourceFile)).AddHours(Handler.GetSetting(Of Integer)(ProfileSetting.TimeOffset, 0))
+                                Dim DestFATTime As Date = NTFSToFATTime(IO.File.GetLastWriteTimeUtc(DestinationFile))
+                                If (DestFATTime - SourceFATTime).TotalSeconds > SecondsInexactTimeComparison Then
+                                    UpdateType = TypeOfUpdate.ReplaceWithOlderFile
+                                End If
+                            End If
+
+                            AddToSyncingList(RelativeFilePath, TypeOfItem.File, Context.Source, TypeOfAction.Copy, UpdateType)
                             Log.LogInfo(String.Format("SearchForChanges: {0} ""{1}"" ""{2}"" ({3}).", If(IsNewFile, "[New File]", "[Updated file]"), SourceFile, DestinationFile, RelativeFilePath))
 
                             If ProgramConfig.GetProgramSetting(Of Boolean)(ProgramSetting.Forecast, False) Then Status.BytesToCopy += Utilities.GetSize(SourceFile) 'Degrades performance.
@@ -795,7 +805,7 @@ Friend Class SynchronizeForm
 
                 Try
                     If Not IsValidFile(RelativeFName) Then
-                        AddToSyncingList(RelativeFName, TypeOfItem.File, Context.Source, TypeOfAction.Delete, False)
+                        AddToSyncingList(RelativeFName, TypeOfItem.File, Context.Source, TypeOfAction.Delete, TypeOfUpdate.None)
                         Log.LogInfo(String.Format("Cleanup: [Delete] ""{0}"" ({1})", File, RelativeFName))
                     Else
                         Log.LogInfo(String.Format("Cleanup: [Keep] ""{0}"" ({1})", File, RelativeFName))
@@ -826,7 +836,7 @@ Friend Class SynchronizeForm
         ' Folder.Length = 0 <=> This is the root folder, not to be deleted.
         If Folder.Length <> 0 AndAlso Not IsValidFile(Folder) Then
             Log.LogInfo(String.Format("Cleanup: [Delete folder] ""{0}"" ({1}).", DestinationFolder, Folder))
-            AddToSyncingList(Folder, TypeOfItem.Folder, Context.Source, TypeOfAction.Delete, False)
+            AddToSyncingList(Folder, TypeOfItem.Folder, Context.Source, TypeOfAction.Delete, TypeOfUpdate.None)
         End If
     End Sub
 

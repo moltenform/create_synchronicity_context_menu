@@ -63,6 +63,12 @@ Public Enum SideOfSource As Integer
     Right = 1
 End Enum
 
+Public Enum TypeOfUpdate As Integer
+    None = 0
+    ReplaceWithNewerFile = 1
+    ReplaceWithOlderFile = 2
+End Enum
+
 Structure SyncingContext
     Public Source As SideOfSource
     Public SourceRootPath As String
@@ -74,7 +80,7 @@ Class SyncingItem
     Public Type As TypeOfItem
     Public Side As SideOfSource
 
-    Public IsUpdate As Boolean
+    Public Update As TypeOfUpdate
     Public Action As TypeOfAction
 
     Public RealId As Integer ' Keeps track of the order in which items where inserted in the syncing list, hence making it possible to recover this insertion order even after sorting the list on other criterias
@@ -91,7 +97,7 @@ Class SyncingItem
     Function FormatAction() As String
         Select Case Action
             Case TypeOfAction.Copy
-                Return If(IsUpdate, Translation.Translate("\UPDATE"), Translation.Translate("\CREATE"))
+                Return If(Update = TypeOfUpdate.None, Translation.Translate("\CREATE"), Translation.Translate("\UPDATE"))
             Case TypeOfAction.Delete
                 Return Translation.Translate("\DELETE")
             Case Else
@@ -113,18 +119,27 @@ Class SyncingItem
     Function ToListViewItem() As ListViewItem
         Dim ListItem As New ListViewItem(New String() {FormatType(), FormatAction(), FormatDirection(), Path})
 
-        Dim Delta As Integer = If(IsUpdate, 1, 0)
+        Dim Delta As Integer = If(Update = TypeOfUpdate.None, 0, 1)
         Select Case Action
             Case TypeOfAction.Copy
                 If Type = TypeOfItem.Folder Then
                     ListItem.ImageIndex = 5 + Delta
                 ElseIf Type = TypeOfItem.File Then
-                    Select Case Side
-                        Case SideOfSource.Left
-                            ListItem.ImageIndex = 0 + Delta
-                        Case SideOfSource.Right
-                            ListItem.ImageIndex = 2 + Delta
-                    End Select
+                    If Update = TypeOfUpdate.ReplaceWithOlderFile Then
+                        Select Case Side
+                            Case SideOfSource.Left
+                                ListItem.ImageIndex = 9
+                            Case SideOfSource.Right
+                                ListItem.ImageIndex = 10
+                        End Select
+                    Else
+                        Select Case Side
+                            Case SideOfSource.Left
+                                ListItem.ImageIndex = 0 + Delta
+                            Case SideOfSource.Right
+                                ListItem.ImageIndex = 2 + Delta
+                        End Select
+                    End If
                 End If
             Case TypeOfAction.Delete
                 If Type = TypeOfItem.Folder Then
