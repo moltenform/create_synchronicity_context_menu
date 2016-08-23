@@ -541,7 +541,7 @@ Friend Class SynchronizeForm
 
         Dim Source As String = If(Side = SideOfSource.Left, LeftRootPath, RightRootPath)
         Dim Destination As String = If(Side = SideOfSource.Left, RightRootPath, LeftRootPath)
-        Dim WarnIfDeletingNonEmptyFolder As Boolean = Handler.GetSetting(Of Boolean)(ProfileSetting.WarnIfDeletingNonEmptyFolder, False)
+        Dim WarnIfDeletingNonEmptyFolder As Boolean = Handler.GetSetting(Of Boolean)(ProfileSetting.WarnIfDeletingNonEmptyFolder, True)
 
         For Each Entry As SyncingItem In SyncingList
             If Entry.Side <> Side Then Continue For
