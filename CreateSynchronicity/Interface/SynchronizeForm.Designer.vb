@@ -559,6 +559,8 @@ Partial Class SynchronizeForm
         Me.SyncingIcons.Images.SetKeyName(6, "folder.png")
         Me.SyncingIcons.Images.SetKeyName(7, "delete-folder.png")
         Me.SyncingIcons.Images.SetKeyName(8, "process-stop.png")
+        Me.SyncingIcons.Images.SetKeyName(9, "go-next-warn.png")
+        Me.SyncingIcons.Images.SetKeyName(10, "go-previous-warn.png")
         '
         'SyncingTimer
         '
