@@ -1,4 +1,4 @@
-amharic:0
+amharic:6
 basque:0
 bulgarian:0
 catalan:0
@@ -9,13 +9,13 @@ czech:0
 danish:0
 dutch:0
 english:0
-estonian:14
+estonian:20
 french:0
 german:0
 greek:0
-hebrew:29
+hebrew:35
 hungarian:4
-indonesian:0
+indonesian:6
 italian:0
 japanese:4
 korean:9

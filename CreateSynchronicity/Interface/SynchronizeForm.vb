@@ -79,7 +79,15 @@ Friend Class SynchronizeForm
         SyncThread = New Threading.Thread(AddressOf Sync)
 
         Me.CreateHandle()
+
         Translation.TranslateControl(Me)
+        Translation.TranslateControl(Me.ContextMenuStripForPreviewList)
+        Dim MenuItems As ToolStripMenuItem() = {Me.ContextMnuLeftCopyPath, Me.ContextMnuLeftExplorer, Me.ContextMnuLeftOpen,
+            Me.ContextMnuRightCopyPath, Me.ContextMnuRightExplorer, Me.ContextMnuRightOpen}
+        For Each MenuItem As ToolStripMenuItem In MenuItems
+            MenuItem.Text = Translation.Translate(MenuItem.Text)
+        Next
+
         Me.Icon = ProgramConfig.Icon
         TitleText = String.Format(Me.Text, Handler.ProfileName, LeftRootPath, RightRootPath)
 
