@@ -143,6 +143,9 @@
     </Compile>
     <Compile Include="Compression interface.vb" />
     <Compile Include="Interaction.vb" />
+    <Compile Include="Interface\SynchronizeContextMenu.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Internationalization.vb" />
     <Compile Include="IO interface.vb" />
     <Compile Include="Interface\LanguageForm.Designer.vb">

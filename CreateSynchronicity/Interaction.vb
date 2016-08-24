@@ -97,6 +97,18 @@ Friend Module Interaction
         'BalloonTipTarget = Nothing ' Useless: will be reset by next call to ShowBalloonTip
     End Sub
 
+    Public Function OpenFileDialog(Filter As String, Title As String) As String
+        Dim Dlg As New OpenFileDialog
+        Dlg.Title = Title
+        Dlg.Filter = Filter
+        Dlg.FilterIndex = 0
+        If (Dlg.ShowDialog = DialogResult.OK) Then
+            Return Dlg.FileName
+        Else
+            Return ""
+        End If
+    End Function
+
     Public Sub StartProcess(ByVal Address As String, Optional ByVal Args As String = "")
         Try
             Diagnostics.Process.Start(Address, Args)

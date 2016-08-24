@@ -73,6 +73,18 @@ Partial Class SynchronizeForm
         Me.PathColumn = CType(New System.Windows.Forms.ColumnHeader(), System.Windows.Forms.ColumnHeader)
         Me.SyncingIcons = New System.Windows.Forms.ImageList(Me.components)
         Me.SyncingTimer = New System.Windows.Forms.Timer(Me.components)
+        Me.ContextMenuStripForPreviewList = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.ContextMnuCompare = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuCopyPathnames = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuSeparator1 = New System.Windows.Forms.ToolStripSeparator()
+        Me.ContextMnuLeft = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuLeftCopyPath = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuLeftOpen = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuLeftExplorer = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuRight = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuRightCopyPath = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuRightOpen = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuRightExplorer = New System.Windows.Forms.ToolStripMenuItem()
         Me.MainLayoutPanel.SuspendLayout()
         Me.Step3LayoutPanel.SuspendLayout()
         Me.Step3_ProgressLayout.SuspendLayout()
@@ -82,6 +94,7 @@ Partial Class SynchronizeForm
         Me.Step1ProgressLayout.SuspendLayout()
         Me.ButtonsLayoutPanel.SuspendLayout()
         Me.StatisticsPanel.SuspendLayout()
+        Me.ContextMenuStripForPreviewList.SuspendLayout()
         Me.SuspendLayout()
         '
         'MainLayoutPanel
@@ -368,6 +381,27 @@ Partial Class SynchronizeForm
         Me.FilesCreatedLabel.Dock = System.Windows.Forms.DockStyle.Fill
         Me.FilesCreatedLabel.Location = New System.Drawing.Point(3, 0)
         Me.FilesCreatedLabel.Name = "FilesCreatedLabel"
+        Me.FilesCreatedLabel.Size = New System.Drawing.Size(126, 17)
+        Me.FilesCreatedLabel.TabIndex = 10
+        Me.FilesCreatedLabel.Text = "\FILES_CREATED"
+        Me.FilesCreatedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        '
+        'FilesCreated
+        '
+        Me.FilesCreated.AutoEllipsis = True
+        Me.FilesCreated.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.FilesCreated.Location = New System.Drawing.Point(135, 0)
+        Me.FilesCreated.Name = "FilesCreated"
+        Me.FilesCreated.Size = New System.Drawing.Size(128, 17)
+        Me.FilesCreated.TabIndex = 9
+        Me.FilesCreated.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        '
+        'FilesCreatedLabel
+        '
+        Me.FilesCreatedLabel.AutoSize = True
+        Me.FilesCreatedLabel.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.FilesCreatedLabel.Location = New System.Drawing.Point(3, 0)
+        Me.FilesCreatedLabel.Name = "FilesCreatedLabel"
         Me.FilesCreatedLabel.Size = New System.Drawing.Size(127, 17)
         Me.FilesCreatedLabel.TabIndex = 10
         Me.FilesCreatedLabel.Text = "\FILES_CREATED"
@@ -517,7 +551,6 @@ Partial Class SynchronizeForm
         Me.PreviewList.Columns.AddRange(New System.Windows.Forms.ColumnHeader() {Me.TypeColumn, Me.ActionColumn, Me.DirectionColumn, Me.PathColumn})
         Me.PreviewList.FullRowSelect = True
         Me.PreviewList.Location = New System.Drawing.Point(12, 12)
-        Me.PreviewList.MultiSelect = False
         Me.PreviewList.Name = "PreviewList"
         Me.PreviewList.Size = New System.Drawing.Size(601, 268)
         Me.PreviewList.SmallImageList = Me.SyncingIcons
@@ -567,6 +600,79 @@ Partial Class SynchronizeForm
         Me.SyncingTimer.Enabled = True
         Me.SyncingTimer.Interval = 50
         '
+        'ContextMenuStripForPreviewList
+        '
+        Me.ContextMenuStripForPreviewList.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ContextMnuCompare, Me.ContextMnuCopyPathnames, Me.ContextMnuSeparator1, Me.ContextMnuLeft, Me.ContextMnuRight})
+        Me.ContextMenuStripForPreviewList.Name = "ContextMenuStrip"
+        Me.ContextMenuStripForPreviewList.Size = New System.Drawing.Size(187, 98)
+        '
+        'ContextMnuCompare
+        '
+        Me.ContextMnuCompare.Name = "ContextMnuCompare"
+        Me.ContextMnuCompare.Size = New System.Drawing.Size(186, 22)
+        Me.ContextMnuCompare.Text = "\COMPARE"
+        '
+        'ContextMnuCopyPathnames
+        '
+        Me.ContextMnuCopyPathnames.Name = "ContextMnuCopyPathnames"
+        Me.ContextMnuCopyPathnames.Size = New System.Drawing.Size(186, 22)
+        Me.ContextMnuCopyPathnames.Text = "\COPY_PATHNAMES"
+        '
+        'ContextMnuSeparator1
+        '
+        Me.ContextMnuSeparator1.Name = "ContextMnuSeparator1"
+        Me.ContextMnuSeparator1.Size = New System.Drawing.Size(183, 6)
+        '
+        'ContextMnuLeft
+        '
+        Me.ContextMnuLeft.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ContextMnuLeftCopyPath, Me.ContextMnuLeftOpen, Me.ContextMnuLeftExplorer})
+        Me.ContextMnuLeft.Name = "ContextMnuLeft"
+        Me.ContextMnuLeft.Size = New System.Drawing.Size(186, 22)
+        Me.ContextMnuLeft.Text = "\LEFT"
+        '
+        'ContextMnuLeftCopyPath
+        '
+        Me.ContextMnuLeftCopyPath.Name = "ContextMnuLeftCopyPath"
+        Me.ContextMnuLeftCopyPath.Size = New System.Drawing.Size(177, 22)
+        Me.ContextMnuLeftCopyPath.Text = "\COPY_FULL_PATH"
+        '
+        'ContextMnuLeftOpen
+        '
+        Me.ContextMnuLeftOpen.Name = "ContextMnuLeftOpen"
+        Me.ContextMnuLeftOpen.Size = New System.Drawing.Size(177, 22)
+        Me.ContextMnuLeftOpen.Text = "\OPEN"
+        '
+        'ContextMnuLeftExplorer
+        '
+        Me.ContextMnuLeftExplorer.Name = "ContextMnuLeftExplorer"
+        Me.ContextMnuLeftExplorer.Size = New System.Drawing.Size(177, 22)
+        Me.ContextMnuLeftExplorer.Text = "\EXPLORER"
+        '
+        'ContextMnuRight
+        '
+        Me.ContextMnuRight.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ContextMnuRightCopyPath, Me.ContextMnuRightOpen, Me.ContextMnuRightExplorer})
+        Me.ContextMnuRight.Name = "ContextMnuRight"
+        Me.ContextMnuRight.Size = New System.Drawing.Size(186, 22)
+        Me.ContextMnuRight.Text = "\RIGHT"
+        '
+        'ContextMnuRightCopyPath
+        '
+        Me.ContextMnuRightCopyPath.Name = "ContextMnuRightCopyPath"
+        Me.ContextMnuRightCopyPath.Size = New System.Drawing.Size(177, 22)
+        Me.ContextMnuRightCopyPath.Text = "\COPY_FULL_PATH"
+        '
+        'ContextMnuRightOpen
+        '
+        Me.ContextMnuRightOpen.Name = "ContextMnuRightOpen"
+        Me.ContextMnuRightOpen.Size = New System.Drawing.Size(177, 22)
+        Me.ContextMnuRightOpen.Text = "\OPEN"
+        '
+        'ContextMnuRightExplorer
+        '
+        Me.ContextMnuRightExplorer.Name = "ContextMnuRightExplorer"
+        Me.ContextMnuRightExplorer.Size = New System.Drawing.Size(177, 22)
+        Me.ContextMnuRightExplorer.Text = "\EXPLORER"
+        '
         'SynchronizeForm
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(7.0!, 13.0!)
@@ -593,6 +699,7 @@ Partial Class SynchronizeForm
         Me.ButtonsLayoutPanel.ResumeLayout(False)
         Me.StatisticsPanel.ResumeLayout(False)
         Me.StatisticsPanel.PerformLayout()
+        Me.ContextMenuStripForPreviewList.ResumeLayout(False)
         Me.ResumeLayout(False)
 
     End Sub
@@ -637,4 +744,16 @@ Partial Class SynchronizeForm
     Friend WithEvents FoldersDeletedLabel As System.Windows.Forms.Label
     Friend WithEvents FilesDeletedLabel As System.Windows.Forms.Label
     Friend WithEvents FilesDeleted As System.Windows.Forms.Label
+    Friend WithEvents ContextMenuStripForPreviewList As ContextMenuStrip
+    Friend WithEvents ContextMnuCompare As ToolStripMenuItem
+    Friend WithEvents ContextMnuCopyPathnames As ToolStripMenuItem
+    Friend WithEvents ContextMnuLeft As ToolStripMenuItem
+    Friend WithEvents ContextMnuRight As ToolStripMenuItem
+    Friend WithEvents ContextMnuLeftCopyPath As ToolStripMenuItem
+    Friend WithEvents ContextMnuLeftOpen As ToolStripMenuItem
+    Friend WithEvents ContextMnuLeftExplorer As ToolStripMenuItem
+    Friend WithEvents ContextMnuRightCopyPath As ToolStripMenuItem
+    Friend WithEvents ContextMnuRightOpen As ToolStripMenuItem
+    Friend WithEvents ContextMnuRightExplorer As ToolStripMenuItem
+    Friend WithEvents ContextMnuSeparator1 As ToolStripSeparator
 End Class

@@ -227,22 +227,22 @@ Friend Class SynchronizeForm
         '      * Handling the CacheVirtualItems event works, but does flicker a lot.
     End Sub
 
+    Private Sub PreviewList_MouseClick(sender As Object, e As MouseEventArgs) Handles PreviewList.MouseClick
+        If e.Button = MouseButtons.Right Then
+            Dim SenderListView As ListView = TryCast(sender, ListView)
+            Dim Item As ListViewItem = SenderListView.GetItemAt(e.X, e.Y)
+            If Item IsNot Nothing Then
+                Me.ContextMenuStripForPreviewList.Show(SenderListView, e.Location)
+            End If
+        End If
+    End Sub
+
     Private Sub PreviewList_ColumnClick(ByVal sender As System.Object, ByVal e As System.Windows.Forms.ColumnClickEventArgs) Handles PreviewList.ColumnClick
         If Status.ShowingErrors Then Exit Sub
 
         Sorter.RegisterClick(e)
         SyncingList.Sort(Sorter)
         PreviewList.Refresh()
-    End Sub
-
-    Private Sub PreviewList_DoubleClick(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles PreviewList.DoubleClick
-        Dim Source As String = "", Dest As String = ""
-        If Not SetPathFromSelectedItem(Source, Dest) Then Exit Sub
-
-        Dim Path As String = If((Control.ModifierKeys And Keys.Alt) <> 0, Dest, Source)
-        If (Control.ModifierKeys And Keys.Control) <> 0 Then Path = IO.Path.GetDirectoryName(Path)
-
-        If IO.File.Exists(Path) OrElse IO.Directory.Exists(Path) Then Interaction.StartProcess(Path)
     End Sub
 
     Private Function SetPathFromSelectedItem(ByRef Source As String, ByRef Dest As String) As Boolean

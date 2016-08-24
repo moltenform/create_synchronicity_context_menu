@@ -17,6 +17,7 @@ Friend Module ProgramSetting
     Public Const MainFormAttributes As String = "Window size and position"
     Public Const ExpertMode As String = "Expert mode"
     Public Const DiffProgram As String = "Diff program"
+    Public Const DiffProgramChecksum As String = "Diff program checksum"
     Public Const DiffArguments As String = "Diff arguments"
     Public Const TextLogs As String = "Text logs"
     Public Const Autocomplete As String = "Autocomplete"
