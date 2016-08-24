@@ -164,5 +164,3 @@ POST_SYNC=Post-sync actie wordt gestart:
 WAKEUP_FAILED=Kan wake-up script niet uitvoeren
 POSTSYNC_FAILED=Kan post-sync script niet uitvoeren
 LATEST=Ga naar de laatste
-
-
