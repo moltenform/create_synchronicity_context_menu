@@ -190,6 +190,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Syncing structures.vb" />
+    <Compile Include="Syncing tests.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Updates.vb" />
     <Compile Include="Utilities.vb" />
   </ItemGroup>

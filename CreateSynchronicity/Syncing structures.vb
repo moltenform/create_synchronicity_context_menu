@@ -151,6 +151,11 @@ Class SyncingItem
 
         Return ListItem
     End Function
+
+    Public Overrides Function ToString() As String
+        Return "RealId=" & RealId.ToString() & " Path=" & Path & " Action=" & Action.ToString() &
+            " Side=" & Side.ToString() & " Type=" & Type.ToString() & " IsUpdate=" & Update.ToString()
+    End Function
 End Class
 
 Friend NotInheritable Class FileNamePattern

@@ -88,6 +88,10 @@ Friend Class MainForm
                     End If
                 Case Keys.L
                     SetView(1)
+                Case Keys.T
+                    SynchronizeForm.Tests()
+                    SynchronizeForm.RunHighLevelTests(e.Alt)
+                    Interaction.ShowMsg(Translation.Translate("\FINISHED"))
                 Case Keys.Add
                     SetFont(Actions.Font.Size + 1)
                 Case Keys.Subtract
