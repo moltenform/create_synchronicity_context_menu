@@ -24,4 +24,12 @@
                 Return Math.Round(Size, Digits).ToString & " B"
         End Select
     End Function
+
+    Friend Function NormalizeCase(ByVal S As String) As String
+#If LINUX Then
+        Return S
+#Else
+        Return S.ToUpperInvariant()
+#End If
+    End Function
 End Module

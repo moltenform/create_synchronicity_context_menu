@@ -83,8 +83,8 @@ Friend Class SynchronizeForm
 
         Translation.TranslateControl(Me)
         Translation.TranslateControl(Me.ContextMenuStripForPreviewList)
-        Me.ContextMnuLr.Text &= "..."
-        Me.ContextMnuRl.Text &= "..."
+        Me.ContextMnuSrcToDest.Text &= "..."
+        Me.ContextMnuDestToSrc.Text &= "..."
 
         Dim MenuItems As ToolStripMenuItem() = {Me.ContextMnuLeftCopyPath, Me.ContextMnuLeftExplorer, Me.ContextMnuLeftOpen,
             Me.ContextMnuRightCopyPath, Me.ContextMnuRightExplorer, Me.ContextMnuRightOpen}
@@ -243,6 +243,8 @@ Friend Class SynchronizeForm
             Dim SenderListView As ListView = TryCast(sender, ListView)
             Dim Item As ListViewItem = SenderListView.GetItemAt(e.X, e.Y)
             If Item IsNot Nothing Then
+                Me.ContextMnuSrcToDest.Enabled = CanRunChildWindowCopying()
+                Me.ContextMnuDestToSrc.Enabled = CanRunChildWindowCopying()
                 Me.ContextMenuStripForPreviewList.Show(SenderListView, e.Location)
             End If
         End If

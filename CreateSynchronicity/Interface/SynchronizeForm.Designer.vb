@@ -86,8 +86,8 @@ Partial Class SynchronizeForm
         Me.ContextMnuRightOpen = New System.Windows.Forms.ToolStripMenuItem()
         Me.ContextMnuRightExplorer = New System.Windows.Forms.ToolStripMenuItem()
         Me.ToolStripMenuItem1 = New System.Windows.Forms.ToolStripSeparator()
-        Me.ContextMnuLr = New System.Windows.Forms.ToolStripMenuItem()
-        Me.ContextMnuRl = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuSrcToDest = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ContextMnuDestToSrc = New System.Windows.Forms.ToolStripMenuItem()
         Me.MainLayoutPanel.SuspendLayout()
         Me.Step3LayoutPanel.SuspendLayout()
         Me.Step3_ProgressLayout.SuspendLayout()
@@ -584,7 +584,7 @@ Partial Class SynchronizeForm
         '
         'ContextMenuStripForPreviewList
         '
-        Me.ContextMenuStripForPreviewList.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ContextMnuCompare, Me.ContextMnuCopyPathnames, Me.ToolStripMenuItem1, Me.ContextMnuLr, Me.ContextMnuRl, Me.ContextMnuSeparator1, Me.ContextMnuLeft, Me.ContextMnuRight})
+        Me.ContextMenuStripForPreviewList.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ContextMnuCompare, Me.ContextMnuCopyPathnames, Me.ToolStripMenuItem1, Me.ContextMnuSrcToDest, Me.ContextMnuDestToSrc, Me.ContextMnuSeparator1, Me.ContextMnuLeft, Me.ContextMnuRight})
         Me.ContextMenuStripForPreviewList.Name = "ContextMenuStrip"
         Me.ContextMenuStripForPreviewList.Size = New System.Drawing.Size(187, 170)
         '
@@ -662,15 +662,15 @@ Partial Class SynchronizeForm
         '
         'ContextMnuLr
         '
-        Me.ContextMnuLr.Name = "ContextMnuLr"
-        Me.ContextMnuLr.Size = New System.Drawing.Size(186, 22)
-        Me.ContextMnuLr.Text = "\LR"
+        Me.ContextMnuSrcToDest.Name = "ContextMnuLr"
+        Me.ContextMnuSrcToDest.Size = New System.Drawing.Size(186, 22)
+        Me.ContextMnuSrcToDest.Text = "\LR"
         '
         'ContextMnuRl
         '
-        Me.ContextMnuRl.Name = "ContextMnuRl"
-        Me.ContextMnuRl.Size = New System.Drawing.Size(186, 22)
-        Me.ContextMnuRl.Text = "\RL"
+        Me.ContextMnuDestToSrc.Name = "ContextMnuRl"
+        Me.ContextMnuDestToSrc.Size = New System.Drawing.Size(186, 22)
+        Me.ContextMnuDestToSrc.Text = "\RL"
         '
         'SynchronizeForm
         '
@@ -756,6 +756,6 @@ Partial Class SynchronizeForm
     Friend WithEvents ContextMnuRightExplorer As ToolStripMenuItem
     Friend WithEvents ContextMnuSeparator1 As ToolStripSeparator
     Friend WithEvents ToolStripMenuItem1 As ToolStripSeparator
-    Friend WithEvents ContextMnuLr As ToolStripMenuItem
-    Friend WithEvents ContextMnuRl As ToolStripMenuItem
+    Friend WithEvents ContextMnuSrcToDest As ToolStripMenuItem
+    Friend WithEvents ContextMnuDestToSrc As ToolStripMenuItem
 End Class
