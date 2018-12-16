@@ -9,11 +9,15 @@
 
 Partial Class SynchronizeForm
     Private Sub ContextMnuLeftCopyPath_Click(sender As Object, e As EventArgs) Handles ContextMnuLeftCopyPath.Click
-        If PreviewList.SelectedIndices.Count > 0 Then Clipboard.SetText(String.Join(Environment.NewLine, GetFullPathsOfSelectedItems(True).ToArray()))
+        If PreviewList.SelectedIndices.Count > 0 Then
+            Clipboard.SetText(String.Join(Environment.NewLine, GetFullPathsOfSelectedItems(True).ToArray()))
+        End If
     End Sub
 
     Private Sub ContextMnuRightCopyPath_Click(sender As Object, e As EventArgs) Handles ContextMnuRightCopyPath.Click
-        If PreviewList.SelectedIndices.Count > 0 Then Clipboard.SetText(String.Join(Environment.NewLine, GetFullPathsOfSelectedItems(False).ToArray()))
+        If PreviewList.SelectedIndices.Count > 0 Then
+            Clipboard.SetText(String.Join(Environment.NewLine, GetFullPathsOfSelectedItems(False).ToArray()))
+        End If
     End Sub
 
     Private Sub ContextMnuLeftOpen_Click(sender As Object, e As EventArgs) Handles ContextMnuLeftOpen.Click
@@ -58,7 +62,8 @@ Partial Class SynchronizeForm
         'when picking just one of the selected items, let's use the focused item because it's the one the user last clicked
         If PreviewList.SelectedIndices.Count = 0 OrElse Status.ShowingErrors Then
             Return Nothing
-        ElseIf PreviewList.FocusedItem IsNot Nothing AndAlso PreviewList.SelectedIndices.Contains(PreviewList.FocusedItem.Index) Then
+        ElseIf PreviewList.FocusedItem IsNot Nothing AndAlso
+                PreviewList.SelectedIndices.Contains(PreviewList.FocusedItem.Index) Then
             Return If(LeftOrRight, LeftRootPath, RightRootPath) & SyncingList(PreviewList.FocusedItem.Index).Path
         Else
             Return If(LeftOrRight, LeftRootPath, RightRootPath) & SyncingList(PreviewList.SelectedIndices(0)).Path
@@ -122,4 +127,12 @@ Partial Class SynchronizeForm
             End Using
         End Using
     End Function
+
+    Private Sub ContextMnuLr_Click(sender As Object, e As EventArgs) Handles ContextMnuLr.Click
+        MessageBox.Show("ltr")
+    End Sub
+
+    Private Sub ContextMnuRl_Click(sender As Object, e As EventArgs) Handles ContextMnuRl.Click
+        MessageBox.Show("rtl")
+    End Sub
 End Class

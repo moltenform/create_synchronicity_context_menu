@@ -24,6 +24,7 @@ Friend Class SynchronizeForm
 
     Private Catchup As Boolean 'Indicates whether this operation was started due to catchup rules.
     Private Preview As Boolean 'Should show a preview.
+    Private IsChildDialog As Boolean = False
 
     Private Status As StatusData
     Private TitleText As String
@@ -82,6 +83,9 @@ Friend Class SynchronizeForm
 
         Translation.TranslateControl(Me)
         Translation.TranslateControl(Me.ContextMenuStripForPreviewList)
+        Me.ContextMnuLr.Text &= "..."
+        Me.ContextMnuRl.Text &= "..."
+
         Dim MenuItems As ToolStripMenuItem() = {Me.ContextMnuLeftCopyPath, Me.ContextMnuLeftExplorer, Me.ContextMnuLeftOpen,
             Me.ContextMnuRightCopyPath, Me.ContextMnuRightExplorer, Me.ContextMnuRightOpen}
         For Each MenuItem As ToolStripMenuItem In MenuItems
@@ -92,7 +96,6 @@ Friend Class SynchronizeForm
         TitleText = String.Format(Me.Text, Handler.ProfileName, LeftRootPath, RightRootPath)
 
         Labels = New String() {"", Step1StatusLabel.Text, Step2StatusLabel.Text, Step3StatusLabel.Text}
-
 #If LINUX Then
         Step1ProgressBar.MarqueeAnimationSpeed = 5000
         SyncingTimer.Interval = 1000
@@ -424,7 +427,7 @@ Friend Class SynchronizeForm
                 End If
 
                 Log.SaveAndDispose(LeftRootPath, RightRootPath, Status)
-                If Not (Status.Failed Or Status.Cancel) Then Handler.SetLastRun() 'Required to implement catching up
+                If Not IsChildDialog AndAlso Not (Status.Failed Or Status.Cancel) Then Handler.SetLastRun() 'Required to implement catching up
 
                 RunPostSync()
 
@@ -590,8 +593,10 @@ Friend Class SynchronizeForm
                                 Dim RemainingFolders As String() = IO.Directory.GetDirectories(SourcePath)
                                 If RemainingFiles.Length > 0 Or RemainingFolders.Length > 0 Then Log.LogInfo(String.Format("Do_Tasks: Removing non-empty folder {0} ({1}) ({2})", SourcePath, String.Join(", ", RemainingFiles), String.Join(", ", RemainingFolders)))
 #End If
+
+                                Dim CheckBeforeDelete As Boolean = WarnIfDeletingNonEmptyFolder AndAlso Not IsChildDialog
                                 Try
-                                    IO.Directory.Delete(SourcePath, Not WarnIfDeletingNonEmptyFolder)
+                                    IO.Directory.Delete(SourcePath, Not CheckBeforeDelete)
                                 Catch ex As Exception
                                     Dim DirInfo As New IO.DirectoryInfo(SourcePath)
                                     DirInfo.Attributes = IO.FileAttributes.Directory 'Using "DirInfo.Attributes = IO.FileAttributes.Normal" does just the same, and actually sets DirInfo.Attributes to "IO.FileAttributes.Directory"
