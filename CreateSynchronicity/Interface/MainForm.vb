@@ -90,7 +90,7 @@ Friend Class MainForm
                     SetView(1)
                 Case Keys.T
                     SynchronizeForm.RunTests(e.Alt)
-                    Interaction.ShowMsg(Translation.Translate("\FINISHED"))
+                    Interaction.ShowMsg("Tests complete.")
                 Case Keys.Add
                     SetFont(Actions.Font.Size + 1)
                 Case Keys.Subtract

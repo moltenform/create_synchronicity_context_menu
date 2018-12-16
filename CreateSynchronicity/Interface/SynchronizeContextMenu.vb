@@ -46,7 +46,7 @@ Partial Class SynchronizeForm
             For Index As Integer = 0 To PathnamesLeft.Count - 1
                 Builder.AppendLine(PathnamesLeft(Index) & "|" & PathnamesRight(Index))
             Next
-            Clipboard.SetText(Builder.ToString())
+            Clipboard.SetText(Builder.ToString().Trim())
         End If
     End Sub
 
