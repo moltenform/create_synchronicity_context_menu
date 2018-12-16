@@ -149,20 +149,20 @@ Partial Class SynchronizeForm
     End Function
 
     Private Sub ContextMnuLr_Click(sender As Object, e As EventArgs) Handles ContextMnuSrcToDest.Click
-        ChildWindowCopy_Open(True)
+        ChildWindowCopy(True)
     End Sub
 
     Private Sub ContextMnuRl_Click(sender As Object, e As EventArgs) Handles ContextMnuDestToSrc.Click
-        ChildWindowCopy_Open(False)
+        ChildWindowCopy(False)
     End Sub
 
-    Enum StartSyncingWithoutAsking
+    Enum StartWithoutAsking
         None
         Start
         Cancel
     End Enum
 
-    Private Function ChildWindowCopy_Open(FromSrcToDest As Boolean, Optional Automated As StartSyncingWithoutAsking = StartSyncingWithoutAsking.None) As List(Of SyncingItem)
+    Private Function ChildWindowCopy(FromSrcToDest As Boolean, Optional ShouldStartWithoutAsking As StartWithoutAsking = StartWithoutAsking.None) As List(Of SyncingItem)
         If Not CanRunChildWindowCopying() Then Return Nothing
 
         Dim NewSrcRoot As String = If(FromSrcToDest, LeftRootPath, RightRootPath)
@@ -172,7 +172,7 @@ Partial Class SynchronizeForm
         Work = ChildWindowCopy_FilterOutRedundantDeletes(Work)
         Dim Arrow As String = Char.ConvertFromUtf32(&H2192)
         Dim Title As String = " " & Me.LeftRootPath & " " & Arrow & " " & Me.RightRootPath
-        'Dim Results As List(Of SyncingItem) = ShowChildDialogForManualCopying(Work, LeftRootPath, RightRootPath, Me.Handler.ProfileName, Title, Automated)
+        Dim Results As List(Of SyncingItem) = ChildWindowCopy_Show(Work, LeftRootPath, RightRootPath, Me.Handler.ProfileName, Title, ShouldStartWithoutAsking)
         Me.PreviewList.SelectedIndices.Clear()
 
         'If an item was successfully sync'd, remove it from the list
@@ -188,8 +188,25 @@ Partial Class SynchronizeForm
         If Not FromSrcToDest AndAlso CreatedFiles.Count > 0 Then ChildWindowCopy_SkipDeletingNewlyCopiedFile(Me.SyncingList, CreatedFiles)
         Me.PreviewList.VirtualListSize = SyncingList.Count
         Me.PreviewList.Refresh()
-        'Return Results
-        Return Nothing
+        Return Results
+    End Function
+
+    Private Shared Function ChildWindowCopy_Show(Work As List(Of SyncingItem), LeftRootPath As String, RightRootPath As String, ProfileName As String, Title As String, ShouldStartWithoutAsking As StartWithoutAsking) As List(Of SyncingItem)
+        Dim ChildForm As New SynchronizeForm(ProfileName, True, False)
+        ChildForm.IsChildDialog = True
+        ChildForm.LeftRootPath = LeftRootPath
+        ChildForm.RightRootPath = RightRootPath
+        ChildForm.TitleText = Title
+
+        'emulate Scan()
+        For Each Item As SyncingItem In Work
+            ChildForm.AddToSyncingList(Item.Path, Item.Type, Item.Side, Item.Action, Item.Update)
+        Next
+        ChildForm.UpdateStatuses()
+        ChildForm.StepCompleted(StatusData.SyncStep.Scan)
+        If ShouldStartWithoutAsking = StartWithoutAsking.Start Then ChildForm.Sync()
+        If ShouldStartWithoutAsking = StartWithoutAsking.None Then ChildForm.ShowDialog()
+        Return ChildForm.SyncingList
     End Function
 
     Private Function ChildWindowCopy_CreateList(FromSrcToDest As Boolean) As List(Of SyncingItem)
