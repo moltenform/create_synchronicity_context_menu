@@ -130,18 +130,21 @@ Partial Class SynchronizeForm
         End Using
     End Function
 
-    Public Function CanRunChildWindowCopying() As Boolean
+    Private Function CanRunChildWindowCopying() As Boolean
         If Me.IsChildDialog Then Return False
-        If PreviewList.SelectedIndices.Count = 0 Then Return False
         If Status.ShowingErrors Then Return False
         If (Not Handler.GetSetting(Of Boolean)(ProfileSetting.PropagateUpdates, True)) Then Return False
+        Return CanRunChildWindowCopyingImpl(SyncingList, Me.PreviewList)
+    End Function
 
+    Private Shared Function CanRunChildWindowCopyingImpl(L As List(Of SyncingItem), Lview As ListView) As Boolean
+        If Lview.SelectedIndices.Count = 0 Then Return False
         'We only support child window copying for
         '1) left-to-right copies (a Copy where SideOfSource=Left)
         '2) left-to-right deletes (a Delete where SideOfSource=Right)
-        For Each Index As Integer In Me.PreviewList.SelectedIndices
-            If Not ((SyncingList(Index).Action = TypeOfAction.Copy AndAlso SyncingList(Index).Side = SideOfSource.Left) OrElse
-                (SyncingList(Index).Action = TypeOfAction.Delete AndAlso SyncingList(Index).Side = SideOfSource.Right)) Then
+        For Each Index As Integer In Lview.SelectedIndices
+            If Not ((L(Index).Action = TypeOfAction.Copy AndAlso L(Index).Side = SideOfSource.Left) OrElse
+                (L(Index).Action = TypeOfAction.Delete AndAlso L(Index).Side = SideOfSource.Right)) Then
                 Return False
             End If
         Next
@@ -164,6 +167,7 @@ Partial Class SynchronizeForm
 
     Private Function ChildWindowCopy(FromSrcToDest As Boolean, Optional ShouldStartWithoutAsking As StartWithoutAsking = StartWithoutAsking.None) As List(Of SyncingItem)
         If Not CanRunChildWindowCopying() Then Return Nothing
+        Dim CompletedItems As New Dictionary(Of String, Boolean)
 
         Dim NewSrcRoot As String = If(FromSrcToDest, LeftRootPath, RightRootPath)
         Dim NewDestRoot As String = If(FromSrcToDest, RightRootPath, LeftRootPath)
@@ -172,7 +176,7 @@ Partial Class SynchronizeForm
         Work = ChildWindowCopy_FilterOutRedundantDeletes(Work)
         Dim Arrow As String = Char.ConvertFromUtf32(&H2192)
         Dim Title As String = " " & Me.LeftRootPath & " " & Arrow & " " & Me.RightRootPath
-        Dim Results As List(Of SyncingItem) = ChildWindowCopy_Show(Work, LeftRootPath, RightRootPath, Me.Handler.ProfileName, Title, ShouldStartWithoutAsking)
+        Dim Results As List(Of SyncingItem) = ChildWindowCopy_Show(Work, LeftRootPath, RightRootPath, Me.Handler.ProfileName, Title, ShouldStartWithoutAsking, CompletedItems)
         Me.PreviewList.SelectedIndices.Clear()
 
         'If an item was successfully sync'd, remove it from the list
@@ -191,7 +195,7 @@ Partial Class SynchronizeForm
         Return Results
     End Function
 
-    Private Shared Function ChildWindowCopy_Show(Work As List(Of SyncingItem), LeftRootPath As String, RightRootPath As String, ProfileName As String, Title As String, ShouldStartWithoutAsking As StartWithoutAsking) As List(Of SyncingItem)
+    Private Shared Function ChildWindowCopy_Show(Work As List(Of SyncingItem), LeftRootPath As String, RightRootPath As String, ProfileName As String, Title As String, ShouldStartWithoutAsking As StartWithoutAsking, CompletedItems As Dictionary(Of String, Boolean)) As List(Of SyncingItem)
         Dim ChildForm As New SynchronizeForm(ProfileName, True, False)
         ChildForm.IsChildDialog = True
         ChildForm.LeftRootPath = LeftRootPath
@@ -204,7 +208,7 @@ Partial Class SynchronizeForm
         Next
         ChildForm.UpdateStatuses()
         ChildForm.StepCompleted(StatusData.SyncStep.Scan)
-        If ShouldStartWithoutAsking = StartWithoutAsking.Start Then ChildForm.Sync()
+        If ShouldStartWithoutAsking = StartWithoutAsking.Start Then ChildForm.Sync(CompletedItems)
         If ShouldStartWithoutAsking = StartWithoutAsking.None Then ChildForm.ShowDialog()
         Return ChildForm.SyncingList
     End Function
