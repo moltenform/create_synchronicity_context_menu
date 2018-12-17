@@ -58,16 +58,16 @@ Partial Class SynchronizeForm
         Dim Expected As String = "dest\d1\deldir\fileindeldir1.txt=abc3|dest\d1\deldir\fileindeldir2.txt=abc4|dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\deldir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
         AssertEqual(Expected, DirectoryFileContentsToString(Dir))
         AssertEqual(10, TestForm.SyncingList.Count)
-        AssertEqual("Path=\deldir Action=Delete Side=Right Type=Folder IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(0)))
-        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Delete Side=Right Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(1)))
-        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Delete Side=Right Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(2)))
-        AssertEqual("Path=\newdir Action=Copy Side=Left Type=Folder IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(3)))
-        AssertEqual("Path=\newdir\fileinnewdir1.txt Action=Copy Side=Left Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(4)))
-        AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Copy Side=Left Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(5)))
-        AssertEqual("Path=\newfile.txt Action=Copy Side=Left Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(6)))
-        AssertEqual("Path=\oldfile.txt Action=Delete Side=Right Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(7)))
-        AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithNewerFile", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(8)))
-        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithOlderFile", TestUtil_ToStringWithoutRealId(TestForm.SyncingList(9)))
+        AssertEqual("Path=\deldir Action=Delete Side=Right Type=Folder IsUpdate=None", TestForm.SyncingList(0).ToStringWithoutRealId)
+        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(1).ToStringWithoutRealId)
+        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(2).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir Action=Copy Side=Left Type=Folder IsUpdate=None", TestForm.SyncingList(3).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir\fileinnewdir1.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(4).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(5).ToStringWithoutRealId)
+        AssertEqual("Path=\newfile.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(6).ToStringWithoutRealId)
+        AssertEqual("Path=\oldfile.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(7).ToStringWithoutRealId)
+        AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithNewerFile", TestForm.SyncingList(8).ToStringWithoutRealId)
+        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithOlderFile", TestForm.SyncingList(9).ToStringWithoutRealId)
     End Sub
 
     Private Shared Sub Test_CopyLeftPaths(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
@@ -336,11 +336,6 @@ Partial Class SynchronizeForm
 
     Private Shared Sub Test_SyncAllSrcToDest(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
         Dim ListWork As List(Of SyncingItem) = New List(Of SyncingItem)(TestForm.SyncingList)
-        'At first, they should all be not-yet-complete
-        For Each Item As SyncingItem In ListWork
-            AssertEqual(False, TestForm.DidSyncingItemComplete(TestForm.LeftRootPath, TestForm.RightRootPath, Item))
-        Next
-
         'Check disk
         Dim Dir As String = TempDir & "\testsync"
         Dim Expected As String = "dest\d1\deldir\fileindeldir1.txt=abc3|dest\d1\deldir\fileindeldir2.txt=abc4|dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\deldir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
@@ -358,29 +353,16 @@ Partial Class SynchronizeForm
         Expected = "dest\d1\newdir\fileinnewdir1.txt=abc1|dest\d1\newdir\fileinnewdir2.txt=abc2|dest\d1\newfile.txt=newfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc12345|dest\d1\updatedworse.txt=xyz|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\newdir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
         AssertEqual(Expected, DirectoryFileContentsToString(Dir))
 
-        'List-of-work should be the same as input, except that the delete of children wasn't needed because we deleted the parent
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(0)), TestUtil_ToStringWithoutRealId(ResultList(0)))
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(3)), TestUtil_ToStringWithoutRealId(ResultList(1)))
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(4)), TestUtil_ToStringWithoutRealId(ResultList(2)))
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(5)), TestUtil_ToStringWithoutRealId(ResultList(3)))
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(6)), TestUtil_ToStringWithoutRealId(ResultList(4)))
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(7)), TestUtil_ToStringWithoutRealId(ResultList(5)))
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(8)), TestUtil_ToStringWithoutRealId(ResultList(6)))
-        AssertEqual(TestUtil_ToStringWithoutRealId(ListWork(9)), TestUtil_ToStringWithoutRealId(ResultList(7)))
-
-        'Now, they should all be complete
-        For Each Item As SyncingItem In ListWork
-            AssertEqual(True, TestForm.DidSyncingItemComplete(TestForm.LeftRootPath, TestForm.RightRootPath, Item))
+        'List-of-work should be the same as input
+        AssertEqual(10, ListWork.Count)
+        AssertEqual(10, ResultList.Count)
+        For I As Integer = 0 To ListWork.Count - 1
+            AssertEqual(ListWork(I).ToStringWithoutRealId, ResultList(I).ToStringWithoutRealId)
         Next
     End Sub
 
     Private Shared Sub Test_SyncAllDestToSrc(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
         Dim ListWork As List(Of SyncingItem) = New List(Of SyncingItem)(TestForm.SyncingList)
-        'At first, they should all be not-yet-complete
-        For Each Item As SyncingItem In ListWork
-            AssertEqual(False, TestForm.DidSyncingItemComplete(TestForm.LeftRootPath, TestForm.RightRootPath, Item))
-        Next
-
         'Do sync
         TestForm.PreviewList.SelectedIndices.Clear()
         For I As Integer = 0 To ListWork.Count - 1
@@ -395,20 +377,18 @@ Partial Class SynchronizeForm
         AssertEqual(Expected, DirectoryFileContentsToString(Dir))
 
         'We used ChildWindowCopy_CreateList to reverse the direction
-        AssertEqual(8, ResultList.Count)
-        AssertEqual("Path=\deldir Action=Copy Side=Right Type=Folder IsUpdate=None", TestUtil_ToStringWithoutRealId(ResultList(0)))
-        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Copy Side=Right Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(ResultList(1)))
-        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Copy Side=Right Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(ResultList(2)))
-        AssertEqual("Path=\newdir Action=Delete Side=Left Type=Folder IsUpdate=None", TestUtil_ToStringWithoutRealId(ResultList(3)))
-        AssertEqual("Path=\newfile.txt Action=Delete Side=Left Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(ResultList(4)))
-        AssertEqual("Path=\oldfile.txt Action=Copy Side=Right Type=File IsUpdate=None", TestUtil_ToStringWithoutRealId(ResultList(5)))
-        AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithNewerFile", TestUtil_ToStringWithoutRealId(ResultList(6)))
-        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithOlderFile", TestUtil_ToStringWithoutRealId(ResultList(7)))
+        AssertEqual(10, ResultList.Count)
+        AssertEqual("Path=\deldir Action=Copy Side=Right Type=Folder IsUpdate=None", ResultList(0).ToStringWithoutRealId)
+        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(1).ToStringWithoutRealId)
+        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(2).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir Action=Delete Side=Left Type=Folder IsUpdate=None", ResultList(3).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir\fileinnewdir1.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(4).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(5).ToStringWithoutRealId)
+        AssertEqual("Path=\newfile.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(6).ToStringWithoutRealId)
+        AssertEqual("Path=\oldfile.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(7).ToStringWithoutRealId)
+        AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithNewerFile", ResultList(8).ToStringWithoutRealId)
+        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithOlderFile", ResultList(9).ToStringWithoutRealId)
 
-        'Now, they should all be complete
-        'For Each Item As SyncingItem In ResultList
-        'AssertEqual(True, TestForm.DidSyncingItemComplete(TestForm.LeftRootPath, TestForm.RightRootPath, Item))
-        'Next
         MessageBox.Show("Todo: Complete this")
     End Sub
 
@@ -708,11 +688,6 @@ Partial Class SynchronizeForm
         IO.File.SetLastWriteTimeUtc(PathDest & "\time-3601s.txt", BasisTime - New TimeSpan(0, 0, 3601))
         IO.File.SetLastWriteTimeUtc(PathDest & "\time-3609s.txt", BasisTime - New TimeSpan(0, 0, 3609))
     End Sub
-
-    Public Shared Function TestUtil_ToStringWithoutRealId(Item As SyncingItem) As String
-        Return "Path=" & Item.Path & " Action=" & Item.Action.ToString() &
-            " Side=" & Item.Side.ToString() & " Type=" & Item.Type.ToString() & " IsUpdate=" & Item.Update.ToString()
-    End Function
 
     Public Shared Function TestUtil_ToStringWithoutUpdateType(Item As SyncingItem) As String
         Return "Path=" & Item.Path & " Action=" & Item.Action.ToString() &

@@ -172,24 +172,22 @@ Partial Class SynchronizeForm
         Dim NewSrcRoot As String = If(FromSrcToDest, LeftRootPath, RightRootPath)
         Dim NewDestRoot As String = If(FromSrcToDest, RightRootPath, LeftRootPath)
         Dim Work As List(Of SyncingItem) = ChildWindowCopy_CreateList(FromSrcToDest)
-        Work = ChildWindowCopy_CreateParentDirs(NewDestRoot, If(FromSrcToDest, SideOfSource.Left, SideOfSource.Right), Work)
-        Work = ChildWindowCopy_FilterOutRedundantDeletes(Work)
+
         Dim Arrow As String = Char.ConvertFromUtf32(&H2192)
         Dim Title As String = " " & Me.LeftRootPath & " " & Arrow & " " & Me.RightRootPath
         Dim Results As List(Of SyncingItem) = ChildWindowCopy_Show(Work, LeftRootPath, RightRootPath, Me.Handler.ProfileName, Title, ShouldStartWithoutAsking, CompletedItems)
         Me.PreviewList.SelectedIndices.Clear()
 
         'If an item was successfully sync'd, remove it from the list
-        Work.Reverse()
-        Dim CreatedFiles As New List(Of String)
-        For Each Item As SyncingItem In Work
-            If Item.RealId >= 0 AndAlso DidSyncingItemComplete(NewSrcRoot, NewDestRoot, Item) Then
-                SyncingList.RemoveAt(Item.RealId)
-                If Item.Action = TypeOfAction.Copy AndAlso Item.Type = TypeOfItem.File Then CreatedFiles.Add(Item.Path)
-            End If
-        Next
-
-        If Not FromSrcToDest AndAlso CreatedFiles.Count > 0 Then ChildWindowCopy_SkipDeletingNewlyCopiedFile(Me.SyncingList, CreatedFiles)
+        'Work.Reverse()
+        'Dim CreatedFiles As New List(Of String)
+        'For Each Item As SyncingItem In Work
+        '    If Item.RealId >= 0 AndAlso DidSyncingItemComplete(NewSrcRoot, NewDestRoot, Item) Then
+        '        SyncingList.RemoveAt(Item.RealId)
+        '        If Item.Action = TypeOfAction.Copy AndAlso Item.Type = TypeOfItem.File Then CreatedFiles.Add(Item.Path)
+        '    End If
+        'Next
+        'If Not FromSrcToDest AndAlso CreatedFiles.Count > 0 Then ChildWindowCopy_SkipDeletingNewlyCopiedFile(Me.SyncingList, CreatedFiles)
         Me.PreviewList.VirtualListSize = SyncingList.Count
         Me.PreviewList.Refresh()
         Return Results
@@ -237,41 +235,6 @@ Partial Class SynchronizeForm
         Return Work
     End Function
 
-    Private Shared Function ChildWindowCopy_CreateParentDirs(Root As String, Side As SideOfSource, Work As List(Of SyncingItem)) As List(Of SyncingItem)
-        'A copy-file will fail if the containing directory doesn't yet exist,
-        'so we need to add create-directory entries. It's ok to be redundant,
-        'it's fine if we create both C:\dira\dirb and C:\dira
-        Dim NewWork As New List(Of SyncingItem)
-        Dim DictDirsMade As New Dictionary(Of String, Boolean)
-
-        For Index As Integer = 0 To Work.Count - 1
-            Dim Item As SyncingItem = Work(Index)
-            If Item.Action = TypeOfAction.Copy AndAlso Item.Type = TypeOfItem.Folder Then
-                DictDirsMade(Root & Item.Path) = True
-            ElseIf Item.Action = TypeOfAction.Copy AndAlso Item.Update = TypeOfUpdate.None Then
-                Dim Parent As String = IO.Path.GetDirectoryName(Root & Item.Path)
-                If Not DictDirsMade.ContainsKey(Parent) AndAlso Not IO.Directory.Exists(Parent) Then
-                    NewWork.Add(MakeSyncingItem(Parent.Substring(Root.Length), TypeOfAction.Copy, Side, TypeOfItem.Folder))
-                    DictDirsMade(Parent) = True
-                End If
-            End If
-            NewWork.Add(Item)
-        Next
-        Return NewWork
-    End Function
-
-    Private Function ChildWindowCopy_FilterOutRedundantDeletes(Work As List(Of SyncingItem)) As List(Of SyncingItem)
-        'If we have 1) delete dir 2) delete dir/file.txt, the second delete will fail. so don't add the second delete.
-        Dim NewWork As New List(Of SyncingItem)
-        Dim DeletedDirectories As New Dictionary(Of String, Boolean)
-        For Index As Integer = 0 To Work.Count - 1
-            If Not IsRedundantDelete(DeletedDirectories, Work(Index)) Then
-                NewWork.Add(Work(Index))
-            End If
-        Next
-        Return NewWork
-    End Function
-
     Private Shared Sub ChildWindowCopy_SkipDeletingNewlyCopiedFile(SyncList As List(Of SyncingItem), CreatedFiles As List(Of String))
         For Index As Integer = 0 To CreatedFiles.Count - 1
             CreatedFiles(Index) = NormalizeCase(CreatedFiles(Index))
@@ -290,23 +253,6 @@ Partial Class SynchronizeForm
             End If
         Next
     End Sub
-
-    Function DidSyncingItemComplete(SrcRoot As String, DestRoot As String, Item As SyncingItem) As Boolean
-        If Item.Action = TypeOfAction.Copy AndAlso Item.Type = TypeOfItem.Folder Then
-            Return IO.Directory.Exists(DestRoot & Item.Path)
-        ElseIf Item.Action = TypeOfAction.Delete AndAlso Item.Type = TypeOfItem.Folder Then
-            Return Not IO.Directory.Exists(DestRoot & Item.Path)
-        ElseIf Item.Action = TypeOfAction.Copy AndAlso Item.Type = TypeOfItem.File Then
-            'Are files are the same?
-            'Use SourceIsMoreRecent instead of == because some media like FAT format has imprecise LMTs
-            Return IO.File.Exists(SrcRoot & Item.Path) AndAlso IO.File.Exists(DestRoot & Item.Path) AndAlso
-                Not SourceIsMoreRecent(SrcRoot & Item.Path, DestRoot & Item.Path) AndAlso
-                Not SourceIsMoreRecent(DestRoot & Item.Path, SrcRoot & Item.Path)
-        ElseIf Item.Action = TypeOfAction.Delete AndAlso Item.Type = TypeOfItem.File Then
-            Return Not IO.File.Exists(DestRoot & Item.Path)
-        End If
-        Return False
-    End Function
 
     Private Shared Function IsRedundantDelete(Dict As Dictionary(Of String, Boolean), Item As SyncingItem) As Boolean
         'If we have 1) delete dir 2) delete dir/file.txt, the second delete will fail. so don't add the second delete.

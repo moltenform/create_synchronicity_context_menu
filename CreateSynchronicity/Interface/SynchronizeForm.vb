@@ -573,10 +573,18 @@ Friend Class SynchronizeForm
                     Case TypeOfItem.File
                         Select Case Entry.Action
                             Case TypeOfAction.Copy 'FIXME: File attributes are never updated
+                                If Me.IsChildDialog AndAlso Not IO.Directory.Exists(IO.Path.GetDirectoryName(DestPath)) Then
+                                    'Works even if the parent's parent isn't there since CreateDirectory() is recursive
+                                    IO.Directory.CreateDirectory(IO.Path.GetDirectoryName(DestPath))
+                                End If
                                 CopyFile(SourcePath, DestPath)
                             Case TypeOfAction.Delete
-                                IO.File.SetAttributes(SourcePath, IO.FileAttributes.Normal)
-                                IO.File.Delete(SourcePath)
+                                If Me.IsChildDialog AndAlso Not IO.File.Exists(SourcePath) Then
+                                    Log.LogInfo(String.Format("Skipping delete of {0} because it's already been deleted.", SourcePath))
+                                Else
+                                    IO.File.SetAttributes(SourcePath, IO.FileAttributes.Normal)
+                                    IO.File.Delete(SourcePath)
+                                End If
                                 Status.DeletedFiles += 1
                         End Select
 
@@ -594,20 +602,25 @@ Friend Class SynchronizeForm
 
                                 Status.CreatedFolders += 1
                             Case TypeOfAction.Delete
+                                If Me.IsChildDialog AndAlso Not IO.Directory.Exists(SourcePath) Then
+                                    Log.LogInfo(String.Format("Skipping delete of {0} because it's already been deleted.", SourcePath))
+                                Else
 #If DEBUG Then
-                                Dim RemainingFiles As String() = IO.Directory.GetFiles(SourcePath)
-                                Dim RemainingFolders As String() = IO.Directory.GetDirectories(SourcePath)
-                                If RemainingFiles.Length > 0 Or RemainingFolders.Length > 0 Then Log.LogInfo(String.Format("Do_Tasks: Removing non-empty folder {0} ({1}) ({2})", SourcePath, String.Join(", ", RemainingFiles), String.Join(", ", RemainingFolders)))
+                                    Dim RemainingFiles As String() = IO.Directory.GetFiles(SourcePath)
+                                    Dim RemainingFolders As String() = IO.Directory.GetDirectories(SourcePath)
+                                    If RemainingFiles.Length > 0 Or RemainingFolders.Length > 0 Then Log.LogInfo(String.Format("Do_Tasks: Removing non-empty folder {0} ({1}) ({2})", SourcePath, String.Join(", ", RemainingFiles), String.Join(", ", RemainingFolders)))
 #End If
 
-                                Dim CheckBeforeDelete As Boolean = WarnIfDeletingNonEmptyFolder AndAlso Not IsChildDialog
-                                Try
-                                    IO.Directory.Delete(SourcePath, Not CheckBeforeDelete)
-                                Catch ex As Exception
-                                    Dim DirInfo As New IO.DirectoryInfo(SourcePath)
-                                    DirInfo.Attributes = IO.FileAttributes.Directory 'Using "DirInfo.Attributes = IO.FileAttributes.Normal" does just the same, and actually sets DirInfo.Attributes to "IO.FileAttributes.Directory"
-                                    DirInfo.Delete()
-                                End Try
+                                    Dim CheckBeforeDelete As Boolean = WarnIfDeletingNonEmptyFolder AndAlso Not IsChildDialog
+                                    Try
+                                        IO.Directory.Delete(SourcePath, Not CheckBeforeDelete)
+                                    Catch ex As Exception
+                                        'Try removing read-only/other flags and retrying
+                                        Dim DirInfo As New IO.DirectoryInfo(SourcePath)
+                                        DirInfo.Attributes = IO.FileAttributes.Directory 'Using "DirInfo.Attributes = IO.FileAttributes.Normal" does just the same, and actually sets DirInfo.Attributes to "IO.FileAttributes.Directory"
+                                        DirInfo.Delete()
+                                    End Try
+                                End If
                                 Status.DeletedFolders += 1
                         End Select
                 End Select
