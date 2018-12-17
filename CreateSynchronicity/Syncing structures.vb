@@ -153,7 +153,11 @@ Class SyncingItem
     End Function
 
     Public Overrides Function ToString() As String
-        Return "RealId=" & RealId.ToString() & " Path=" & Path & " Action=" & Action.ToString() &
+        Return "RealId=" & RealId.ToString() & " " & ToStringWithoutRealId()
+    End Function
+
+    Public Function ToStringWithoutRealId() As String
+        Return "Path=" & Path & " Action=" & Action.ToString() &
             " Side=" & Side.ToString() & " Type=" & Type.ToString() & " IsUpdate=" & Update.ToString()
     End Function
 End Class

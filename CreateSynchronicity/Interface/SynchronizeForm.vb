@@ -77,7 +77,7 @@ Friend Class SynchronizeForm
 
         FullSyncThread = New Threading.Thread(AddressOf FullSync)
         ScanThread = New Threading.Thread(AddressOf Scan)
-        SyncThread = New Threading.Thread(AddressOf Sync)
+        SyncThread = New Threading.Thread(AddressOf SyncNoTrackingNeeded)
 
         Me.CreateHandle()
 
@@ -496,7 +496,7 @@ Friend Class SynchronizeForm
 #Region " Scanning / IO "
     Private Sub FullSync()
         Scan()
-        Sync()
+        SyncNoTrackingNeeded()
     End Sub
 
     Private Sub Scan()
@@ -529,7 +529,11 @@ Friend Class SynchronizeForm
         Me.Invoke(StepCompletedCallback, StatusData.SyncStep.Scan)
     End Sub
 
-    Private Sub Sync()
+    Private Sub SyncNoTrackingNeeded()
+        Sync(New Dictionary(Of String, Boolean))
+    End Sub
+
+    Private Sub Sync(CompletedItems As Dictionary(Of String, Boolean))
         Dim StepCompletedCallback As New StepCompletedCall(AddressOf StepCompleted)
         Dim SetMaxCallback As New SetIntCall(AddressOf SetMax)
 
@@ -540,16 +544,16 @@ Friend Class SynchronizeForm
 
         Me.Invoke(New Action(AddressOf LaunchTimer))
         Me.Invoke(SetMaxCallback, New Object() {StatusData.SyncStep.LR, Status.LeftActionsCount})
-        Do_Tasks(SideOfSource.Left, StatusData.SyncStep.LR)
+        Do_Tasks(SideOfSource.Left, StatusData.SyncStep.LR, CompletedItems)
         Me.Invoke(StepCompletedCallback, StatusData.SyncStep.LR)
 
         Me.Invoke(SetMaxCallback, New Object() {StatusData.SyncStep.RL, Status.RightActionsCount})
-        Do_Tasks(SideOfSource.Right, StatusData.SyncStep.RL)
+        Do_Tasks(SideOfSource.Right, StatusData.SyncStep.RL, CompletedItems)
         Me.Invoke(StepCompletedCallback, StatusData.SyncStep.RL)
     End Sub
 
     '"Source" is "current side", with the corresponding side stored in "Side"
-    Private Sub Do_Tasks(ByVal Side As SideOfSource, ByVal CurrentStep As StatusData.SyncStep)
+    Private Sub Do_Tasks(ByVal Side As SideOfSource, ByVal CurrentStep As StatusData.SyncStep, CompletedItems As Dictionary(Of String, Boolean))
         Dim IncrementCallback As New SetIntCall(AddressOf Increment)
 
         Dim Source As String = If(Side = SideOfSource.Left, LeftRootPath, RightRootPath)
@@ -609,6 +613,7 @@ Friend Class SynchronizeForm
                 End Select
                 Status.ActionsDone += 1
                 Log.LogAction(Entry, Side, True)
+                CompletedItems(Entry.ToStringWithoutRealId()) = True
 
             Catch StopEx As Threading.ThreadAbortException
                 Exit Sub
