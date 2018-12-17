@@ -8,26 +8,34 @@
 
 Partial Class SynchronizeForm
     Private Shared Sub RunEachTest(ConfigPath As String, TempDir As String, ShowUi As Boolean)
-        'Context menu tests
+        'Sync all, left-to-right
         WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
         Dim TestForm As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
-        Test_ExpectedFilesInList(TestForm, TempDir, ShowUi)
+        Test_SyncAllSrcToDest(TestForm, TempDir, ShowUi)
+
+        'Sync all, right-to-left
+        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
+        Test_SyncAllDestToSrc(TestForm, TempDir, ShowUi)
+
+        'Sync partial
+        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
+        Test_SyncPartial(TestForm, TempDir, ShowUi)
+
+        'Context menu tests
+        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
         Test_CopyLeftPaths(TestForm, TempDir, ShowUi)
         Test_CopyRightPaths(TestForm, TempDir, ShowUi)
         Test_CopyLeftOnePath(TestForm, TempDir, ShowUi)
         Test_CopyRightOnePath(TestForm, TempDir, ShowUi)
         Test_CopyPathnames(TestForm, TempDir, ShowUi)
         Test_CanRunChildWindowCopying(TestForm)
-        'Perform sync
-        Test_SyncAllSrcToDest(TestForm, TempDir, ShowUi)
-        'Sync right-to-left
-        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
-        TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
-        Test_SyncAllDestToSrc(TestForm, TempDir, ShowUi)
 
         'Last-modified-time checks 
         WriteTestFilesLmtTest(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
-        Test_StrictDate(ConfigPath, TempDir, ShowUi)
+        Test_LastModifiedTimeTests(ConfigPath, TempDir, ShowUi)
         If IO.Directory.Exists(TempDir) Then IO.Directory.Delete(TempDir, True)
     End Sub
 
@@ -41,10 +49,10 @@ Partial Class SynchronizeForm
         End Try
     End Sub
 
-    Private Shared Sub TestUtil_SetSelection(TestForm As SynchronizeForm, Indices As Int32())
-        TestForm.PreviewList.SelectedIndices.Clear()
+    Private Shared Sub TestUtil_SetSelection(Lv As ListView, Indices As Int32())
+        Lv.SelectedIndices.Clear()
         For Each Index As Int32 In Indices
-            TestForm.PreviewList.SelectedIndices.Add(Index)
+            Lv.SelectedIndices.Add(Index)
         Next
     End Sub
 
@@ -52,64 +60,47 @@ Partial Class SynchronizeForm
         Return S.Replace("%dir", Dir).Replace("||", Environment.NewLine)
     End Function
 
-    Private Shared Sub Test_ExpectedFilesInList(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
-        Dim Dir As String = TempDir & "\testsync"
-        Dim Expected As String = "dest\d1\deldir\fileindeldir1.txt=abc3|dest\d1\deldir\fileindeldir2.txt=abc4|dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\deldir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
-        AssertEqual(Expected, DirectoryFileContentsToString(Dir))
-        AssertEqual(10, TestForm.SyncingList.Count)
-        AssertEqual("Path=\deldir Action=Delete Side=Right Type=Folder IsUpdate=None", TestForm.SyncingList(0).ToStringWithoutRealId)
-        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(1).ToStringWithoutRealId)
-        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(2).ToStringWithoutRealId)
-        AssertEqual("Path=\newdir Action=Copy Side=Left Type=Folder IsUpdate=None", TestForm.SyncingList(3).ToStringWithoutRealId)
-        AssertEqual("Path=\newdir\fileinnewdir1.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(4).ToStringWithoutRealId)
-        AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(5).ToStringWithoutRealId)
-        AssertEqual("Path=\newfile.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(6).ToStringWithoutRealId)
-        AssertEqual("Path=\oldfile.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(7).ToStringWithoutRealId)
-        AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithNewerFile", TestForm.SyncingList(8).ToStringWithoutRealId)
-        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithOlderFile", TestForm.SyncingList(9).ToStringWithoutRealId)
-    End Sub
-
     Private Shared Sub Test_CopyLeftPaths(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
         Clipboard.SetText("_")
         Dim Dir As String = TempDir & "\testsync\src\d1"
         '0 items selected
-        TestUtil_SetSelection(TestForm, New Int32() {})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual("_", Clipboard.GetText())
         '1 item selected, deleted dir
-        TestUtil_SetSelection(TestForm, New Int32() {0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {0})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\deldir", Dir), Clipboard.GetText())
         '1 item selected, deleted file
-        TestUtil_SetSelection(TestForm, New Int32() {1})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\deldir\fileindeldir1.txt", Dir), Clipboard.GetText())
         '1 item selected, new dir
-        TestUtil_SetSelection(TestForm, New Int32() {3})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), Clipboard.GetText())
         '1 item selected, new file
-        TestUtil_SetSelection(TestForm, New Int32() {4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {4})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir\fileinnewdir1.txt", Dir), Clipboard.GetText())
         '1 item selected, changed file (newer)
-        TestUtil_SetSelection(TestForm, New Int32() {8})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\updatedbetter.txt", Dir), Clipboard.GetText())
         '1 item selected, changed file (older)
-        TestUtil_SetSelection(TestForm, New Int32() {9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {9})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\updatedworse.txt", Dir), Clipboard.GetText())
         '2 items selected, new dir, new file
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir||%dir\newdir\fileinnewdir1.txt", Dir), Clipboard.GetText())
         '4 items selected, new dir, new file, changed files
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4, 8, 9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4, 8, 9})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir||%dir\newdir\fileinnewdir1.txt||%dir\updatedbetter.txt||%dir\updatedworse.txt", Dir), Clipboard.GetText())
         '4 items selected, deleted dir, deleted file, changed files, different order added
-        TestUtil_SetSelection(TestForm, New Int32() {8, 9, 1, 0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8, 9, 1, 0})
         TestForm.ContextMnuLeftCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\deldir||%dir\deldir\fileindeldir1.txt||%dir\updatedbetter.txt||%dir\updatedworse.txt", Dir), Clipboard.GetText())
     End Sub
@@ -118,43 +109,43 @@ Partial Class SynchronizeForm
         Clipboard.SetText("_")
         Dim Dir As String = TempDir & "\testsync\dest\d1"
         '0 items selected
-        TestUtil_SetSelection(TestForm, New Int32() {})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual("_", Clipboard.GetText())
         '1 item selected, deleted dir
-        TestUtil_SetSelection(TestForm, New Int32() {0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {0})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\deldir", Dir), Clipboard.GetText())
         '1 item selected, deleted file
-        TestUtil_SetSelection(TestForm, New Int32() {1})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\deldir\fileindeldir1.txt", Dir), Clipboard.GetText())
         '1 item selected, new dir
-        TestUtil_SetSelection(TestForm, New Int32() {3})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), Clipboard.GetText())
         '1 item selected, new file
-        TestUtil_SetSelection(TestForm, New Int32() {4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {4})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir\fileinnewdir1.txt", Dir), Clipboard.GetText())
         '1 item selected, changed file (newer)
-        TestUtil_SetSelection(TestForm, New Int32() {8})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\updatedbetter.txt", Dir), Clipboard.GetText())
         '1 item selected, changed file (older)
-        TestUtil_SetSelection(TestForm, New Int32() {9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {9})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\updatedworse.txt", Dir), Clipboard.GetText())
         '2 items selected, new dir, new file
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir||%dir\newdir\fileinnewdir1.txt", Dir), Clipboard.GetText())
         '4 items selected, new dir, new file, changed files
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4, 8, 9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4, 8, 9})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\newdir||%dir\newdir\fileinnewdir1.txt||%dir\updatedbetter.txt||%dir\updatedworse.txt", Dir), Clipboard.GetText())
         '4 items selected, deleted dir, deleted file, changed files, different order added
-        TestUtil_SetSelection(TestForm, New Int32() {8, 9, 1, 0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8, 9, 1, 0})
         TestForm.ContextMnuRightCopyPath_Click(Nothing, Nothing)
         AssertEqual(TestUtil_ToNewline("%dir\deldir||%dir\deldir\fileindeldir1.txt||%dir\updatedbetter.txt||%dir\updatedworse.txt", Dir), Clipboard.GetText())
     End Sub
@@ -162,68 +153,68 @@ Partial Class SynchronizeForm
     Private Shared Sub Test_CopyLeftOnePath(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
         Dim Dir As String = TempDir & "\testsync\src\d1"
         '0 items selected
-        TestUtil_SetSelection(TestForm, New Int32() {})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {})
         AssertEqual(Nothing, TestForm.GetFullPathsOfOneSelectedItem(True))
         '1 item selected, deleted dir
-        TestUtil_SetSelection(TestForm, New Int32() {0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {0})
         AssertEqual(TestUtil_ToNewline("%dir\deldir", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '1 item selected, deleted file
-        TestUtil_SetSelection(TestForm, New Int32() {1})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
         AssertEqual(TestUtil_ToNewline("%dir\deldir\fileindeldir1.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '1 item selected, new dir
-        TestUtil_SetSelection(TestForm, New Int32() {3})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3})
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '1 item selected, new file
-        TestUtil_SetSelection(TestForm, New Int32() {4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {4})
         AssertEqual(TestUtil_ToNewline("%dir\newdir\fileinnewdir1.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '1 item selected, changed file (newer)
-        TestUtil_SetSelection(TestForm, New Int32() {8})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8})
         AssertEqual(TestUtil_ToNewline("%dir\updatedbetter.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '1 item selected, changed file (older)
-        TestUtil_SetSelection(TestForm, New Int32() {9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {9})
         AssertEqual(TestUtil_ToNewline("%dir\updatedworse.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '2 items selected, new dir, new file
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4})
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '4 items selected, new dir, new file, changed files
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4, 8, 9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4, 8, 9})
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
         '4 items selected, deleted dir, deleted file, changed files, different order added
-        TestUtil_SetSelection(TestForm, New Int32() {8, 9, 1, 0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8, 9, 1, 0})
         AssertEqual(TestUtil_ToNewline("%dir\deldir", Dir), TestForm.GetFullPathsOfOneSelectedItem(True))
     End Sub
 
     Private Shared Sub Test_CopyRightOnePath(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
         Dim Dir As String = TempDir & "\testsync\dest\d1"
         '0 items selected
-        TestUtil_SetSelection(TestForm, New Int32() {})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {})
         AssertEqual(Nothing, TestForm.GetFullPathsOfOneSelectedItem(False))
         '1 item selected, deleted dir
-        TestUtil_SetSelection(TestForm, New Int32() {0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {0})
         AssertEqual(TestUtil_ToNewline("%dir\deldir", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '1 item selected, deleted file
-        TestUtil_SetSelection(TestForm, New Int32() {1})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
         AssertEqual(TestUtil_ToNewline("%dir\deldir\fileindeldir1.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '1 item selected, new dir
-        TestUtil_SetSelection(TestForm, New Int32() {3})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3})
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '1 item selected, new file
-        TestUtil_SetSelection(TestForm, New Int32() {4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {4})
         AssertEqual(TestUtil_ToNewline("%dir\newdir\fileinnewdir1.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '1 item selected, changed file (newer)
-        TestUtil_SetSelection(TestForm, New Int32() {8})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8})
         AssertEqual(TestUtil_ToNewline("%dir\updatedbetter.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '1 item selected, changed file (older)
-        TestUtil_SetSelection(TestForm, New Int32() {9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {9})
         AssertEqual(TestUtil_ToNewline("%dir\updatedworse.txt", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '2 items selected, new dir, new file
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4})
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '4 items selected, new dir, new file, changed files
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4, 8, 9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4, 8, 9})
         AssertEqual(TestUtil_ToNewline("%dir\newdir", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
         '4 items selected, deleted dir, deleted file, changed files, different order added
-        TestUtil_SetSelection(TestForm, New Int32() {8, 9, 1, 0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8, 9, 1, 0})
         AssertEqual(TestUtil_ToNewline("%dir\deldir", Dir), TestForm.GetFullPathsOfOneSelectedItem(False))
     End Sub
 
@@ -232,45 +223,45 @@ Partial Class SynchronizeForm
         Dim Dir1 As String = TempDir & "\testsync\src\d1"
         Dim Dir2 As String = TempDir & "\testsync\dest\d1"
         '0 items selected
-        TestUtil_SetSelection(TestForm, New Int32() {})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         AssertEqual("_", Clipboard.GetText())
         '1 item selected, deleted dir
-        TestUtil_SetSelection(TestForm, New Int32() {0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {0})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         AssertEqual(String.Format("{0}\deldir|{1}\deldir", Dir1, Dir2), Clipboard.GetText())
         '1 item selected, deleted file
-        TestUtil_SetSelection(TestForm, New Int32() {1})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         AssertEqual(String.Format("{0}\deldir\fileindeldir1.txt|{1}\deldir\fileindeldir1.txt", Dir1, Dir2), Clipboard.GetText())
         '1 item selected, new dir
-        TestUtil_SetSelection(TestForm, New Int32() {3})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         AssertEqual(String.Format("{0}\newdir|{1}\newdir", Dir1, Dir2), Clipboard.GetText())
         '1 item selected, new file
-        TestUtil_SetSelection(TestForm, New Int32() {4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {4})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         AssertEqual(String.Format("{0}\newdir\fileinnewdir1.txt|{1}\newdir\fileinnewdir1.txt", Dir1, Dir2), Clipboard.GetText())
         '1 item selected, changed file (newer)
-        TestUtil_SetSelection(TestForm, New Int32() {8})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         AssertEqual(String.Format("{0}\updatedbetter.txt|{1}\updatedbetter.txt", Dir1, Dir2), Clipboard.GetText())
         '1 item selected, changed file (older)
-        TestUtil_SetSelection(TestForm, New Int32() {9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {9})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         AssertEqual(String.Format("{0}\updatedworse.txt|{1}\updatedworse.txt", Dir1, Dir2), Clipboard.GetText())
         '2 items selected, new dir, new file
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         Dim Expected As String = String.Format("{0}\newdir|{1}\newdir||{0}\newdir\fileinnewdir1.txt|{1}\newdir\fileinnewdir1.txt", Dir1, Dir2)
         AssertEqual(TestUtil_ToNewline(Expected, ""), Clipboard.GetText())
         '4 items selected, new dir, new file, changed files
-        TestUtil_SetSelection(TestForm, New Int32() {3, 4, 8, 9})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3, 4, 8, 9})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         Expected = String.Format("{0}\newdir|{1}\newdir||{0}\newdir\fileinnewdir1.txt|{1}\newdir\fileinnewdir1.txt||{0}\updatedbetter.txt|{1}\updatedbetter.txt||{0}\updatedworse.txt|{1}\updatedworse.txt", Dir1, Dir2)
         AssertEqual(TestUtil_ToNewline(Expected, ""), Clipboard.GetText())
         '4 items selected, deleted dir, deleted file, changed files, different order added
-        TestUtil_SetSelection(TestForm, New Int32() {8, 9, 1, 0})
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {8, 9, 1, 0})
         TestForm.ContextMnuCopyPathnames_Click(Nothing, Nothing)
         Expected = String.Format("{0}\deldir|{1}\deldir||{0}\deldir\fileindeldir1.txt|{1}\deldir\fileindeldir1.txt||{0}\updatedbetter.txt|{1}\updatedbetter.txt||{0}\updatedworse.txt|{1}\updatedworse.txt", Dir1, Dir2)
         AssertEqual(TestUtil_ToNewline(Expected, ""), Clipboard.GetText())
@@ -293,42 +284,47 @@ Partial Class SynchronizeForm
         Next
         AssertEqual(14, TestLv.Items.Count)
         'Nothing selected; can't start
-        TestLv.SelectedIndices.Clear()
+        TestUtil_SetSelection(TestLv, New Int32() {})
         AssertEqual(False, CanRunChildWindowCopyingImpl(L, TestLv))
         'Two bad things; can't start
-        TestLv.SelectedIndices.Clear()
-        TestLv.SelectedIndices.Add(L.Count - 3)
-        TestLv.SelectedIndices.Add(L.Count - 2)
+        TestUtil_SetSelection(TestLv, New Int32() {L.Count - 3, L.Count - 2})
         AssertEqual(False, CanRunChildWindowCopyingImpl(L, TestLv))
         'One good thing and one bad thing; can't start
         TestLv.SelectedIndices.Clear()
-        TestLv.SelectedIndices.Add(1)
-        TestLv.SelectedIndices.Add(L.Count - 3)
+        TestUtil_SetSelection(TestLv, New Int32() {1, L.Count - 3})
         AssertEqual(False, CanRunChildWindowCopyingImpl(L, TestLv))
         'Two good things; can start
-        TestLv.SelectedIndices.Clear()
-        TestLv.SelectedIndices.Add(1)
-        TestLv.SelectedIndices.Add(3)
+        TestUtil_SetSelection(TestLv, New Int32() {1, 3})
         AssertEqual(True, CanRunChildWindowCopyingImpl(L, TestLv))
         'Everything in the list except the last 4 should be good
         For Index As Integer = 0 To TestLv.Items.Count - 1
-            TestLv.SelectedIndices.Clear()
-            TestLv.SelectedIndices.Add(Index)
+            TestUtil_SetSelection(TestLv, New Int32() {Index})
             AssertEqual(Index < TestLv.Items.Count - 4, CanRunChildWindowCopyingImpl(L, TestLv))
         Next
         TestLv.Dispose()
     End Sub
 
     Private Shared Sub Test_SyncAllSrcToDest(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
-        Dim ListWork As List(Of SyncingItem) = New List(Of SyncingItem)(TestForm.SyncingList)
         'Check disk
         Dim Dir As String = TempDir & "\testsync"
         Dim Expected As String = "dest\d1\deldir\fileindeldir1.txt=abc3|dest\d1\deldir\fileindeldir2.txt=abc4|dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\deldir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
         AssertEqual(Expected, DirectoryFileContentsToString(Dir))
+        AssertEqual(10, TestForm.SyncingList.Count)
+        AssertEqual("Path=\deldir Action=Delete Side=Right Type=Folder IsUpdate=None", TestForm.SyncingList(0).ToStringWithoutRealId)
+        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(1).ToStringWithoutRealId)
+        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(2).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir Action=Copy Side=Left Type=Folder IsUpdate=None", TestForm.SyncingList(3).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir\fileinnewdir1.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(4).ToStringWithoutRealId)
+        AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(5).ToStringWithoutRealId)
+        AssertEqual("Path=\newfile.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(6).ToStringWithoutRealId)
+        AssertEqual("Path=\oldfile.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(7).ToStringWithoutRealId)
+        AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithNewerFile", TestForm.SyncingList(8).ToStringWithoutRealId)
+        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithOlderFile", TestForm.SyncingList(9).ToStringWithoutRealId)
 
         'Do sync
+        Dim ListWorkPrev As List(Of SyncingItem) = New List(Of SyncingItem)(TestForm.SyncingList)
         TestForm.PreviewList.SelectedIndices.Clear()
-        For I As Integer = 0 To ListWork.Count - 1
+        For I As Integer = 0 To TestForm.SyncingList.Count - 1
             TestForm.PreviewList.SelectedIndices.Add(I)
         Next
         If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Close', in the next dialog.")
@@ -339,18 +335,20 @@ Partial Class SynchronizeForm
         AssertEqual(Expected, DirectoryFileContentsToString(Dir))
 
         'List-of-work should be the same as input
-        AssertEqual(10, ListWork.Count)
+        AssertEqual(10, ListWorkPrev.Count)
         AssertEqual(10, ResultList.Count)
-        For I As Integer = 0 To ListWork.Count - 1
-            AssertEqual(ListWork(I).ToStringWithoutRealId, ResultList(I).ToStringWithoutRealId)
+        For I As Integer = 0 To ListWorkPrev.Count - 1
+            AssertEqual(ListWorkPrev(I).ToStringWithoutRealId, ResultList(I).ToStringWithoutRealId)
         Next
+
+        'Should be no items left in the list
+        AssertEqual(0, TestForm.SyncingList.Count)
     End Sub
 
     Private Shared Sub Test_SyncAllDestToSrc(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
-        Dim ListWork As List(Of SyncingItem) = New List(Of SyncingItem)(TestForm.SyncingList)
         'Do sync
         TestForm.PreviewList.SelectedIndices.Clear()
-        For I As Integer = 0 To ListWork.Count - 1
+        For I As Integer = 0 To TestForm.SyncingList.Count - 1
             TestForm.PreviewList.SelectedIndices.Add(I)
         Next
         If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Close', in the next dialog.")
@@ -374,10 +372,52 @@ Partial Class SynchronizeForm
         AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithNewerFile", ResultList(8).ToStringWithoutRealId)
         AssertEqual("Path=\updatedworse.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithOlderFile", ResultList(9).ToStringWithoutRealId)
 
-        MessageBox.Show("Todo: Complete this")
+        'Should be no items left in the list
+        AssertEqual(0, TestForm.SyncingList.Count)
     End Sub
 
-    Private Shared Sub Test_StrictDate(ConfigPath As String, TempDir As String, ShowUi As Boolean)
+    Private Shared Sub Test_SyncPartial(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
+        'If you cancel the sync, should have no effect
+        TestForm.PreviewList.SelectedIndices.Clear()
+        For I As Integer = 0 To TestForm.SyncingList.Count - 1
+            TestForm.PreviewList.SelectedIndices.Add(I)
+        Next
+        If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Cancel', in the next dialog.")
+        Dim ResultList As List(Of SyncingItem) = TestForm.ChildWindowCopy(False, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Cancel))
+        AssertEqual(10, ResultList.Count)
+        AssertEqual(10, TestForm.SyncingList.Count)
+
+        'OK to delete a file that's already deleted
+        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(1).ToStringWithoutRealId)
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
+
+        'OK to delete a directory that's already deleted
+        'OK to copy a file to where the parent isn't there yet
+        'OK to copy a directory to where the parent isn't there yet
+
+        ''Check disk
+        'Dim Dir As String = TempDir & "\testsync"
+        'Dim Expected As String = ""
+        'AssertEqual(Expected, DirectoryFileContentsToString(Dir))
+        '
+        ''We used ChildWindowCopy_CreateList to reverse the direction
+        'AssertEqual(10, ResultList.Count)
+        'AssertEqual("Path=\deldir Action=Copy Side=Right Type=Folder IsUpdate=None", ResultList(0).ToStringWithoutRealId)
+        'AssertEqual("Path=\deldir\fileindeldir1.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(1).ToStringWithoutRealId)
+        'AssertEqual("Path=\deldir\fileindeldir2.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(2).ToStringWithoutRealId)
+        'AssertEqual("Path=\newdir Action=Delete Side=Left Type=Folder IsUpdate=None", ResultList(3).ToStringWithoutRealId)
+        'AssertEqual("Path=\newdir\fileinnewdir1.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(4).ToStringWithoutRealId)
+        'AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(5).ToStringWithoutRealId)
+        'AssertEqual("Path=\newfile.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(6).ToStringWithoutRealId)
+        'AssertEqual("Path=\oldfile.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(7).ToStringWithoutRealId)
+        'AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithNewerFile", ResultList(8).ToStringWithoutRealId)
+        'AssertEqual("Path=\updatedworse.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithOlderFile", ResultList(9).ToStringWithoutRealId)
+        '
+        ''Should be no items left in the list
+        'AssertEqual(0, TestForm.SyncingList.Count)
+    End Sub
+
+    Private Shared Sub Test_LastModifiedTimeTests(ConfigPath As String, TempDir As String, ShowUi As Boolean)
         'Check disk contents
         Dim Dir As String = TempDir & "\testsync"
         Dim Expected As String = "dest\d1\~content,~size,~time.txt=1234|dest\d1\~content,~size,=time.txt=1234|dest\d1\~content,=size,~time.txt=123|dest\d1\~content,=size,=time.txt=123|dest\d1\=content,=size,~time.txt=abc|dest\d1\=content,=size,=time.txt=abc|dest\d1\time+3591s.txt=abc|dest\d1\time+3599s.txt=abc|dest\d1\time+3601s.txt=abc|dest\d1\time+3609s.txt=abc|dest\d1\time+3s.txt=abc|dest\d1\time+60s.txt=abc|dest\d1\time+9s.txt=abc|dest\d1\time0s.txt=abc|dest\d1\time-3591s.txt=abc|dest\d1\time-3599s.txt=abc|dest\d1\time-3601s.txt=abc|dest\d1\time-3609s.txt=abc|dest\d1\time-3s.txt=abc|dest\d1\time-60s.txt=abc|dest\d1\time-9s.txt=abc|src\d1\~content,~size,~time.txt=abc|src\d1\~content,~size,=time.txt=abc|src\d1\~content,=size,~time.txt=abc|src\d1\~content,=size,=time.txt=abc|src\d1\=content,=size,~time.txt=abc|src\d1\=content,=size,=time.txt=abc|src\d1\time+3591s.txt=abc|src\d1\time+3599s.txt=abc|src\d1\time+3601s.txt=abc|src\d1\time+3609s.txt=abc|src\d1\time+3s.txt=abc|src\d1\time+60s.txt=abc|src\d1\time+9s.txt=abc|src\d1\time0s.txt=abc|src\d1\time-3591s.txt=abc|src\d1\time-3599s.txt=abc|src\d1\time-3601s.txt=abc|src\d1\time-3609s.txt=abc|src\d1\time-3s.txt=abc|src\d1\time-60s.txt=abc|src\d1\time-9s.txt=abc|{dirs:}dest|dest\d1|src|src\d1|"
@@ -407,6 +447,7 @@ Partial Class SynchronizeForm
             AssertEqual("Path=\time-60s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(17)))
             AssertEqual("Path=\time-9s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(18)))
         End Using
+
         Using TestFormLmt As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, Checksum:=True, StrictDate:=True, Checksize:=False)
             'Same as before, since the fizesize won't change without changing the checksum
             AssertEqual(18, TestFormLmt.PreviewList.Items.Count - 1)
@@ -430,6 +471,7 @@ Partial Class SynchronizeForm
             AssertEqual("Path=\time-60s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(17)))
             AssertEqual("Path=\time-9s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(18)))
         End Using
+
         Using TestFormLmt As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, Checksum:=True, StrictDate:=False, Checksize:=True)
             'Same as before except doesn't include the six items around 0s or around 3600s
             AssertEqual(12, TestFormLmt.PreviewList.Items.Count - 1)
@@ -447,6 +489,7 @@ Partial Class SynchronizeForm
             AssertEqual("Path=\time-60s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(11)))
             AssertEqual("Path=\time-9s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(12)))
         End Using
+
         Using TestFormLmt As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, Checksum:=True, StrictDate:=False, Checksize:=False)
             'Same as before, since the fizesize won't change without changing the checksum
             AssertEqual(12, TestFormLmt.PreviewList.Items.Count - 1)
@@ -464,6 +507,7 @@ Partial Class SynchronizeForm
             AssertEqual("Path=\time-60s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(11)))
             AssertEqual("Path=\time-9s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(12)))
         End Using
+
         Using TestFormLmt As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, Checksum:=False, StrictDate:=True, Checksize:=True)
             'Everything is included except =content,=size,=time.txt and time0s.txt and ~content,=size,=time.txt
             AssertEqual(17, TestFormLmt.PreviewList.Items.Count - 1)
@@ -486,6 +530,7 @@ Partial Class SynchronizeForm
             AssertEqual("Path=\time-60s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(16)))
             AssertEqual("Path=\time-9s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(17)))
         End Using
+
         Using TestFormLmt As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, Checksum:=False, StrictDate:=False, Checksize:=True)
             'Same as before except doesn't include the six items around 0s or around 3600s
             AssertEqual(11, TestFormLmt.PreviewList.Items.Count - 1)
@@ -502,6 +547,7 @@ Partial Class SynchronizeForm
             AssertEqual("Path=\time-60s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(10)))
             AssertEqual("Path=\time-9s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(11)))
         End Using
+
         Using TestFormLmt As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, Checksum:=False, StrictDate:=True, Checksize:=False)
             'Everything is included except =content,=size,=time.txt and time0s.txt and ~content,=size,=time.txt and ~content,~size,=time.txt
             AssertEqual(16, TestFormLmt.PreviewList.Items.Count - 1)
@@ -523,6 +569,7 @@ Partial Class SynchronizeForm
             AssertEqual("Path=\time-60s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(15)))
             AssertEqual("Path=\time-9s.txt Action=Copy Side=Left Type=File Update=Changed", TestUtil_ToStringWithoutUpdateType(TestFormLmt.SyncingList(16)))
         End Using
+
         Using TestFormLmt As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, Checksum:=False, StrictDate:=False, Checksize:=False)
             'Same as before except doesn't include the six items around 0s or around 3600s
             AssertEqual(10, TestFormLmt.PreviewList.Items.Count - 1)
