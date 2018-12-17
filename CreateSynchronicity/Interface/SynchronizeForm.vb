@@ -25,6 +25,7 @@ Friend Class SynchronizeForm
     Private Catchup As Boolean 'Indicates whether this operation was started due to catchup rules.
     Private Preview As Boolean 'Should show a preview.
     Private IsChildDialog As Boolean = False
+    Private CompletedItems As New Dictionary(Of String, Boolean)
 
     Private Status As StatusData
     Private TitleText As String
@@ -77,7 +78,7 @@ Friend Class SynchronizeForm
 
         FullSyncThread = New Threading.Thread(AddressOf FullSync)
         ScanThread = New Threading.Thread(AddressOf Scan)
-        SyncThread = New Threading.Thread(AddressOf SyncNoTrackingNeeded)
+        SyncThread = New Threading.Thread(AddressOf Sync)
 
         Me.CreateHandle()
 
@@ -496,7 +497,7 @@ Friend Class SynchronizeForm
 #Region " Scanning / IO "
     Private Sub FullSync()
         Scan()
-        SyncNoTrackingNeeded()
+        Sync()
     End Sub
 
     Private Sub Scan()
@@ -529,11 +530,7 @@ Friend Class SynchronizeForm
         Me.Invoke(StepCompletedCallback, StatusData.SyncStep.Scan)
     End Sub
 
-    Private Sub SyncNoTrackingNeeded()
-        Sync(New Dictionary(Of String, Boolean))
-    End Sub
-
-    Private Sub Sync(CompletedItems As Dictionary(Of String, Boolean))
+    Private Sub Sync()
         Dim StepCompletedCallback As New StepCompletedCall(AddressOf StepCompleted)
         Dim SetMaxCallback As New SetIntCall(AddressOf SetMax)
 
@@ -542,18 +539,19 @@ Friend Class SynchronizeForm
         Sorter.Order = SortOrder.Ascending
         SyncingList.Sort(Sorter)
 
+        Me.CompletedItems.Clear()
         Me.Invoke(New Action(AddressOf LaunchTimer))
         Me.Invoke(SetMaxCallback, New Object() {StatusData.SyncStep.LR, Status.LeftActionsCount})
-        Do_Tasks(SideOfSource.Left, StatusData.SyncStep.LR, CompletedItems)
+        Do_Tasks(SideOfSource.Left, StatusData.SyncStep.LR)
         Me.Invoke(StepCompletedCallback, StatusData.SyncStep.LR)
 
         Me.Invoke(SetMaxCallback, New Object() {StatusData.SyncStep.RL, Status.RightActionsCount})
-        Do_Tasks(SideOfSource.Right, StatusData.SyncStep.RL, CompletedItems)
+        Do_Tasks(SideOfSource.Right, StatusData.SyncStep.RL)
         Me.Invoke(StepCompletedCallback, StatusData.SyncStep.RL)
     End Sub
 
     '"Source" is "current side", with the corresponding side stored in "Side"
-    Private Sub Do_Tasks(ByVal Side As SideOfSource, ByVal CurrentStep As StatusData.SyncStep, CompletedItems As Dictionary(Of String, Boolean))
+    Private Sub Do_Tasks(ByVal Side As SideOfSource, ByVal CurrentStep As StatusData.SyncStep)
         Dim IncrementCallback As New SetIntCall(AddressOf Increment)
 
         Dim Source As String = If(Side = SideOfSource.Left, LeftRootPath, RightRootPath)

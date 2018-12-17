@@ -18,7 +18,6 @@ Partial Class SynchronizeForm
         Test_CopyRightOnePath(TestForm, TempDir, ShowUi)
         Test_CopyPathnames(TestForm, TempDir, ShowUi)
         Test_CanRunChildWindowCopying(TestForm)
-        Test_IsDirectoryAlreadyDeleted(TestForm)
         'Perform sync
         Test_SyncAllSrcToDest(TestForm, TempDir, ShowUi)
         'Sync right-to-left
@@ -318,20 +317,6 @@ Partial Class SynchronizeForm
             AssertEqual(Index < TestLv.Items.Count - 4, CanRunChildWindowCopyingImpl(L, TestLv))
         Next
         TestLv.Dispose()
-    End Sub
-
-    Private Shared Sub Test_IsDirectoryAlreadyDeleted(TestForm As SynchronizeForm)
-        Dim DeletedDirectories As New Dictionary(Of String, Boolean)
-        AssertEqual(False, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.Folder)))
-        AssertEqual(True, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.Folder)))
-        AssertEqual(True, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1\g2", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.Folder)))
-        AssertEqual(True, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1\g1\g1\g1", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.Folder)))
-        AssertEqual(True, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1\c.txt", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.File)))
-        AssertEqual(True, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1\g2\g2\c.txt", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.File)))
-        AssertEqual(False, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.File)))
-        AssertEqual(False, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s1.txt", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.File)))
-        AssertEqual(False, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s123.txt", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.File)))
-        AssertEqual(False, IsRedundantDelete(DeletedDirectories, MakeSyncingItem("d1\s12", TypeOfAction.Delete, SideOfSource.Left, TypeOfItem.File)))
     End Sub
 
     Private Shared Sub Test_SyncAllSrcToDest(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
