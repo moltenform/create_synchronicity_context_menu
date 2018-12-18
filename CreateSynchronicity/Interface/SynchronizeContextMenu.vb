@@ -81,7 +81,8 @@ Partial Class SynchronizeForm
     End Sub
 
     Private Sub ContextMnuOpenFiles(Path As String)
-        Dim ExeExtensions As String = "|exe|bat|com|cmd|vb|vbs|vbe|js|jse|ws|wsf|wsc|wsh|ps1|ps1xml|ps2|ps2xml|psc1|psc2|msh|msh1|msh2|mshxml|msh1xml|msh2xml|lnk|py|rb|pif|application|gadget|msi|msp|scr|hta|cpl|msc|jar|scf|reg|"
+        Dim ExeExtensions As String = "|exe|bat|com|cmd|vb|vbs|vbe|js|jse|ws|wsf|wsc|wsh|ps1|ps1xml|ps2|ps2xml|psc1|psc2|" &
+            "msh|msh1|msh2|mshxml|msh1xml|msh2xml|lnk|py|rb|pif|application|gadget|msi|msp|scr|hta|cpl|msc|jar|scf|reg|"
         Dim Notepad As String = Environment.SystemDirectory & "\notepad.exe"
         If Not String.IsNullOrEmpty(Path) Then
             If IO.Directory.Exists(Path) Then
@@ -123,7 +124,7 @@ Partial Class SynchronizeForm
 
     Private Function GetFileChecksum(Path As String) As String
         Using Stream As IO.FileStream = IO.File.OpenRead(Path)
-            Using Sha As New Security.Cryptography.SHA1Managed()
+            Using Sha As New Security.Cryptography.SHA256Managed()
                 Dim Checksum As Byte() = Sha.ComputeHash(Stream)
                 Return BitConverter.ToString(Checksum)
             End Using
@@ -191,22 +192,23 @@ Partial Class SynchronizeForm
 
     Private Shared Function ChildWindowCopy_Show(Work As List(Of SyncingItem), LeftRootPath As String, RightRootPath As String, ProfileName As String,
             Title As String, ShouldStartWithoutAsking As StartWithoutAsking, ByRef ResultCompletedItems As Dictionary(Of String, Boolean)) As List(Of SyncingItem)
-        Dim ChildForm As New SynchronizeForm(ProfileName, True, False)
-        ChildForm.IsChildDialog = True
-        ChildForm.LeftRootPath = LeftRootPath
-        ChildForm.RightRootPath = RightRootPath
-        ChildForm.TitleText = Title
+        Using ChildForm As New SynchronizeForm(ProfileName, True, False)
+            ChildForm.IsChildDialog = True
+            ChildForm.LeftRootPath = LeftRootPath
+            ChildForm.RightRootPath = RightRootPath
+            ChildForm.TitleText = Title
 
-        'emulate Scan()
-        For Each Item As SyncingItem In Work
-            ChildForm.AddToSyncingList(Item.Path, Item.Type, Item.Side, Item.Action, Item.Update)
-        Next
-        ChildForm.UpdateStatuses()
-        ChildForm.StepCompleted(StatusData.SyncStep.Scan)
-        If ShouldStartWithoutAsking = StartWithoutAsking.Start Then ChildForm.Sync()
-        If ShouldStartWithoutAsking = StartWithoutAsking.None Then ChildForm.ShowDialog()
-        ResultCompletedItems = ChildForm.CompletedItems
-        Return ChildForm.SyncingList
+            'Emulate Scan()
+            For Each Item As SyncingItem In Work
+                ChildForm.AddToSyncingList(Item.Path, Item.Type, Item.Side, Item.Action, Item.Update)
+            Next
+            ChildForm.UpdateStatuses()
+            ChildForm.StepCompleted(StatusData.SyncStep.Scan)
+            If ShouldStartWithoutAsking = StartWithoutAsking.Start Then ChildForm.Sync()
+            If ShouldStartWithoutAsking = StartWithoutAsking.None Then ChildForm.ShowDialog()
+            ResultCompletedItems = ChildForm.CompletedItems
+            Return ChildForm.SyncingList
+        End Using
     End Function
 
     Private Function ChildWindowCopy_CreateList(FromSrcToDest As Boolean) As List(Of SyncingItem)

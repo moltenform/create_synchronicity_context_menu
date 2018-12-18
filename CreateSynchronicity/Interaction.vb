@@ -98,15 +98,16 @@ Friend Module Interaction
     End Sub
 
     Public Function OpenFileDialog(Filter As String, Title As String) As String
-        Dim Dlg As New OpenFileDialog
-        Dlg.Title = Title
-        Dlg.Filter = Filter
-        Dlg.FilterIndex = 0
-        If (Dlg.ShowDialog = DialogResult.OK) Then
-            Return Dlg.FileName
-        Else
-            Return ""
-        End If
+        Using Dlg As New OpenFileDialog
+            Dlg.Title = Title
+            Dlg.Filter = Filter
+            Dlg.FilterIndex = 0
+            If (Dlg.ShowDialog = DialogResult.OK) Then
+                Return Dlg.FileName
+            Else
+                Return ""
+            End If
+        End Using
     End Function
 
     Public Sub StartProcess(ByVal Address As String, Optional ByVal Args As String = "")
