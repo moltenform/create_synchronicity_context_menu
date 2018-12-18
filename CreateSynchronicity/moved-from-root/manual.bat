@@ -8,6 +8,7 @@
 @echo Created by:   Clément Pit--Claudel.
 @echo Web site:     http://synchronicity.sourceforge.net.
 
+cd ..\..
 @set LOCALROOT=D:\Documents\Sites Web\Sourceforge\Synchronicity
 @set WEBPAGES=%LOCALROOT%\pages
 @set NAME=Create Synchronicity

@@ -19,6 +19,7 @@ echo Requires 7z and devenv and md5sum installed in your path.
 goto end
 
 :start
+cd ..\..
 set TAG=%~1
 set CHECKSUMS=%~2
 
