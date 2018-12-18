@@ -134,6 +134,9 @@ Partial Class SynchronizeForm
         If Me.IsChildDialog Then Return False
         If Status.ShowingErrors Then Return False
         If (Not Handler.GetSetting(Of Boolean)(ProfileSetting.PropagateUpdates, True)) Then Return False
+        Dim Method As Integer = Handler.GetSetting(Of Integer)(ProfileSetting.Method, ProfileSetting.DefaultMethod)
+        If Not (Method = ProfileSetting.SyncMethod.LRIncremental OrElse Method = ProfileSetting.SyncMethod.LRMirror) Then Return False
+
         Return CanRunChildWindowCopyingImpl(SyncingList, Me.PreviewList)
     End Function
 
@@ -178,7 +181,7 @@ Partial Class SynchronizeForm
         Dim Results As List(Of SyncingItem) = ChildWindowCopy_Show(Work, LeftRootPath, RightRootPath, Me.Handler.ProfileName, Title, ShouldStartWithoutAsking, ResultCompletedItems)
         Me.PreviewList.SelectedIndices.Clear()
 
-        Dim NewSyncingList As List(Of SyncingItem) = UpdateSyncingListAfterChildWindowCopy(SyncingList, ResultCompletedItems, FromSrcToDest)
+        Dim NewSyncingList As List(Of SyncingItem) = UpdateSyncingListAfterChildWindowCopy(SyncingList, ResultCompletedItems, FromSrcToDest, LeftRootPath, RightRootPath)
         Me.SyncingList.Clear()
         Me.SyncingList.AddRange(NewSyncingList)
         Me.PreviewList.VirtualListSize = SyncingList.Count
@@ -227,15 +230,22 @@ Partial Class SynchronizeForm
                 'Make creations into deletions
                 NewItem.Action = TypeOfAction.Delete
                 NewItem.Side = SideOfSource.Left
-            Else
+            ElseIf NewItem.Action = TypeOfAction.Copy AndAlso NewItem.Update <> TypeOfUpdate.None Then
                 'For a changed file, reverse direction
                 NewItem.Side = If(NewItem.Side = SideOfSource.Left, SideOfSource.Right, SideOfSource.Left)
             End If
         End If
+
+        If NewItem.Action = TypeOfAction.Copy AndAlso NewItem.Update <> TypeOfUpdate.None Then
+            'In a child window, looks better visually if all updates are green
+            NewItem.Update = TypeOfUpdate.ReplaceWithNewerFile
+        End If
+
         Return NewItem
     End Function
 
-    Private Shared Function UpdateSyncingListAfterChildWindowCopy(SyncingList As List(Of SyncingItem), CompletedItems As Dictionary(Of String, Boolean), FromSrcToDest As Boolean) As List(Of SyncingItem)
+    Private Shared Function UpdateSyncingListAfterChildWindowCopy(SyncingList As List(Of SyncingItem), CompletedItems As Dictionary(Of String, Boolean),
+            FromSrcToDest As Boolean, LeftRootPath As String, RightRootPath As String) As List(Of SyncingItem)
         Dim NewSyncingList As New List(Of SyncingItem)
         Dim ProtectTheseDirectories As New Dictionary(Of String, Boolean)
         If Not FromSrcToDest Then
@@ -243,8 +253,8 @@ Partial Class SynchronizeForm
             For Each Pair As KeyValuePair(Of String, Boolean) In CompletedItems
                 Dim Parts As String() = Pair.Key.Split(New String() {" Action=Copy Side=Right Type=File IsUpdate=None"}, StringSplitOptions.None)
                 If Parts.Length = 2 AndAlso Parts(1) = "" AndAlso Parts(0).StartsWith("Path=") Then
-                    'We used to use string.startswith, but it was O(n*m) - slow - and we don't want C:\myfile to be seen as a "parent" of C:\myfile1234
-                    Dim Path As String = Parts(0).Substring("Path=".Length)
+                    'We used to use startswith(), but it was O(n*m) and we don't want C:\myfile to ever be seen as a "parent" of C:\myfile1234
+                    Dim Path As String = LeftRootPath & Parts(0).Substring("Path=".Length)
                     UpdateSyncingList_AddAllParents(ProtectTheseDirectories, Path)
                 End If
             Next
@@ -253,9 +263,9 @@ Partial Class SynchronizeForm
         For Each Item As SyncingItem In SyncingList
             Dim ConvertedItem As SyncingItem = ChildWindowCopy_ConvertItem(Item, 0, FromSrcToDest)
             If CompletedItems.ContainsKey(ConvertedItem.ToStringWithoutRealId) Then
-                'We processed this item
+                'We processed this item successfully
             ElseIf Not FromSrcToDest AndAlso Item.Action = TypeOfAction.Delete AndAlso Item.Type = TypeOfItem.Folder _
-                AndAlso Item.Side = SideOfSource.Right AndAlso ProtectTheseDirectories.ContainsKey(Item.Path) Then
+                AndAlso Item.Side = SideOfSource.Right AndAlso ProtectTheseDirectories.ContainsKey(LeftRootPath & Item.Path) Then
                 'We should remove this item because it would delete a file we just made
             Else
                 NewSyncingList.Add(Item)

@@ -8,23 +8,32 @@
 
 Partial Class SynchronizeForm
     Private Shared Sub RunEachTest(ConfigPath As String, TempDir As String, ShowUi As Boolean)
+        Dim SrcDir As String = TempDir & "\testsync\src\d1"
+        Dim DestDir As String = TempDir & "\testsync\dest\d1"
+
         'Sync all, left-to-right
-        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        WriteTestFiles(TempDir, SrcDir, DestDir)
         Dim TestForm As SynchronizeForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
         Test_SyncAllSrcToDest(TestForm, TempDir, ShowUi)
 
         'Sync all, right-to-left
-        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        WriteTestFiles(TempDir, SrcDir, DestDir)
         TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
         Test_SyncAllDestToSrc(TestForm, TempDir, ShowUi)
 
         'Sync partial
-        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        WriteTestFiles(TempDir, SrcDir, DestDir)
         TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
         Test_SyncPartial(TestForm, TempDir, ShowUi)
 
+        'We'll remove delete-folders that would delete a newly-created file
+        WriteTestFiles(TempDir, SrcDir, DestDir)
+        TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
+        'Test_SyncRemoveDeleteFolderItems(TestForm, TempDir, ShowUi)
+        Test_AddAllParents()
+
         'Context menu tests
-        WriteTestFiles(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        WriteTestFiles(TempDir, SrcDir, DestDir)
         TestForm = InitHighlevelTests(ConfigPath, TempDir, StrictDate:=True, Checksum:=False, Checksize:=False)
         Test_CopyLeftPaths(TestForm, TempDir, ShowUi)
         Test_CopyRightPaths(TestForm, TempDir, ShowUi)
@@ -34,7 +43,7 @@ Partial Class SynchronizeForm
         Test_CanRunChildWindowCopying(TestForm)
 
         'Last-modified-time checks 
-        WriteTestFilesLmtTest(TempDir, TempDir & "\testsync\src\d1", TempDir & "\testsync\dest\d1")
+        WriteTestFilesLmtTest(TempDir, SrcDir, DestDir)
         Test_LastModifiedTimeTests(ConfigPath, TempDir, ShowUi)
         If IO.Directory.Exists(TempDir) Then IO.Directory.Delete(TempDir, True)
     End Sub
@@ -304,8 +313,8 @@ Partial Class SynchronizeForm
         TestLv.Dispose()
     End Sub
 
-    Private Shared Sub Test_SyncAllSrcToDest(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
-        'Check disk
+    Private Shared Sub Test_SyncVerifyInitialState(TestForm As SynchronizeForm, TempDir As String)
+        'Check disk and syncing list
         Dim Dir As String = TempDir & "\testsync"
         Dim Expected As String = "dest\d1\deldir\fileindeldir1.txt=abc3|dest\d1\deldir\fileindeldir2.txt=abc4|dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\deldir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
         AssertEqual(Expected, DirectoryFileContentsToString(Dir))
@@ -320,8 +329,11 @@ Partial Class SynchronizeForm
         AssertEqual("Path=\oldfile.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(7).ToStringWithoutRealId)
         AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithNewerFile", TestForm.SyncingList(8).ToStringWithoutRealId)
         AssertEqual("Path=\updatedworse.txt Action=Copy Side=Left Type=File IsUpdate=ReplaceWithOlderFile", TestForm.SyncingList(9).ToStringWithoutRealId)
+    End Sub
 
+    Private Shared Sub Test_SyncAllSrcToDest(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
         'Do sync
+        Test_SyncVerifyInitialState(TestForm, TempDir)
         Dim ListWorkPrev As List(Of SyncingItem) = New List(Of SyncingItem)(TestForm.SyncingList)
         TestForm.PreviewList.SelectedIndices.Clear()
         For I As Integer = 0 To TestForm.SyncingList.Count - 1
@@ -331,14 +343,16 @@ Partial Class SynchronizeForm
         Dim ResultList As List(Of SyncingItem) = TestForm.ChildWindowCopy(True, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Start))
 
         'Check disk
-        Expected = "dest\d1\newdir\fileinnewdir1.txt=abc1|dest\d1\newdir\fileinnewdir2.txt=abc2|dest\d1\newfile.txt=newfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc12345|dest\d1\updatedworse.txt=xyz|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\newdir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
+        Dim Dir As String = TempDir & "\testsync"
+        Dim Expected As String = "dest\d1\newdir\fileinnewdir1.txt=abc1|dest\d1\newdir\fileinnewdir2.txt=abc2|dest\d1\newfile.txt=newfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc12345|dest\d1\updatedworse.txt=xyz|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\newdir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
         AssertEqual(Expected, DirectoryFileContentsToString(Dir))
 
         'List-of-work should be the same as input
         AssertEqual(10, ListWorkPrev.Count)
         AssertEqual(10, ResultList.Count)
         For I As Integer = 0 To ListWorkPrev.Count - 1
-            AssertEqual(ListWorkPrev(I).ToStringWithoutRealId, ResultList(I).ToStringWithoutRealId)
+            Dim Expect As String = ListWorkPrev(I).ToStringWithoutRealId.Replace("IsUpdate=ReplaceWithOlderFile", "IsUpdate=ReplaceWithNewerFile")
+            AssertEqual(Expect, ResultList(I).ToStringWithoutRealId)
         Next
 
         'Should be no items left in the list
@@ -347,6 +361,7 @@ Partial Class SynchronizeForm
 
     Private Shared Sub Test_SyncAllDestToSrc(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
         'Do sync
+        Test_SyncVerifyInitialState(TestForm, TempDir)
         TestForm.PreviewList.SelectedIndices.Clear()
         For I As Integer = 0 To TestForm.SyncingList.Count - 1
             TestForm.PreviewList.SelectedIndices.Add(I)
@@ -370,51 +385,135 @@ Partial Class SynchronizeForm
         AssertEqual("Path=\newfile.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(6).ToStringWithoutRealId)
         AssertEqual("Path=\oldfile.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(7).ToStringWithoutRealId)
         AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithNewerFile", ResultList(8).ToStringWithoutRealId)
-        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithOlderFile", ResultList(9).ToStringWithoutRealId)
+        AssertEqual("Path=\updatedworse.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithNewerFile", ResultList(9).ToStringWithoutRealId)
 
         'Should be no items left in the list
         AssertEqual(0, TestForm.SyncingList.Count)
     End Sub
 
     Private Shared Sub Test_SyncPartial(TestForm As SynchronizeForm, TempDir As String, ShowUi As Boolean)
+        Dim Dir As String = TempDir & "\testsync"
+        Dim ListWorkPrev As List(Of SyncingItem) = New List(Of SyncingItem)(TestForm.SyncingList)
+
         'If you cancel the sync, should have no effect
+        Test_SyncVerifyInitialState(TestForm, TempDir)
         TestForm.PreviewList.SelectedIndices.Clear()
         For I As Integer = 0 To TestForm.SyncingList.Count - 1
             TestForm.PreviewList.SelectedIndices.Add(I)
         Next
         If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Cancel', in the next dialog.")
-        Dim ResultList As List(Of SyncingItem) = TestForm.ChildWindowCopy(False, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Cancel))
+        Dim ResultList As List(Of SyncingItem) = TestForm.ChildWindowCopy(True, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Cancel))
         AssertEqual(10, ResultList.Count)
         AssertEqual(10, TestForm.SyncingList.Count)
+        Test_SyncVerifyInitialState(TestForm, TempDir)
 
         'OK to delete a file that's already deleted
-        AssertEqual("Path=\deldir\fileindeldir1.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(1).ToStringWithoutRealId)
-        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
+        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Delete Side=Right Type=File IsUpdate=None", TestForm.SyncingList(2).ToStringWithoutRealId)
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {2})
+        IO.File.Delete(Dir & "\dest\d1\deldir\fileindeldir2.txt")
+        If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Close', in the next dialog.")
+        ResultList = TestForm.ChildWindowCopy(True, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Start))
+        AssertEqual(1, ResultList.Count)
+        AssertEqual("Path=\deldir\fileindeldir2.txt Action=Delete Side=Right Type=File IsUpdate=None", ResultList(0).ToStringWithoutRealId)
+        AssertEqual(9, TestForm.SyncingList.Count)
+        AssertEqual(ListWorkPrev(0).ToStringWithoutRealId, TestForm.SyncingList(0).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(1).ToStringWithoutRealId, TestForm.SyncingList(1).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(3).ToStringWithoutRealId, TestForm.SyncingList(2).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(4).ToStringWithoutRealId, TestForm.SyncingList(3).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(5).ToStringWithoutRealId, TestForm.SyncingList(4).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(6).ToStringWithoutRealId, TestForm.SyncingList(5).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(7).ToStringWithoutRealId, TestForm.SyncingList(6).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(8).ToStringWithoutRealId, TestForm.SyncingList(7).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(9).ToStringWithoutRealId, TestForm.SyncingList(8).ToStringWithoutRealId)
+        Dim Expected As String = "dest\d1\deldir\fileindeldir1.txt=abc3|dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\deldir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
+        AssertEqual(Expected, DirectoryFileContentsToString(Dir))
 
         'OK to delete a directory that's already deleted
-        'OK to copy a file to where the parent isn't there yet
-        'OK to copy a directory to where the parent isn't there yet
+        AssertEqual("Path=\deldir Action=Delete Side=Right Type=Folder IsUpdate=None", TestForm.SyncingList(0).ToStringWithoutRealId)
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {0})
+        IO.Directory.Delete(Dir & "\dest\d1\deldir", True)
+        If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Close', in the next dialog.")
+        ResultList = TestForm.ChildWindowCopy(True, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Start))
+        AssertEqual(1, ResultList.Count)
+        AssertEqual("Path=\deldir Action=Delete Side=Right Type=Folder IsUpdate=None", ResultList(0).ToStringWithoutRealId)
+        AssertEqual(8, TestForm.SyncingList.Count)
+        AssertEqual(ListWorkPrev(1).ToStringWithoutRealId, TestForm.SyncingList(0).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(3).ToStringWithoutRealId, TestForm.SyncingList(1).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(4).ToStringWithoutRealId, TestForm.SyncingList(2).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(5).ToStringWithoutRealId, TestForm.SyncingList(3).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(6).ToStringWithoutRealId, TestForm.SyncingList(4).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(7).ToStringWithoutRealId, TestForm.SyncingList(5).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(8).ToStringWithoutRealId, TestForm.SyncingList(6).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(9).ToStringWithoutRealId, TestForm.SyncingList(7).ToStringWithoutRealId)
+        Expected = "dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
+        AssertEqual(Expected, DirectoryFileContentsToString(Dir))
 
-        ''Check disk
-        'Dim Dir As String = TempDir & "\testsync"
-        'Dim Expected As String = ""
-        'AssertEqual(Expected, DirectoryFileContentsToString(Dir))
-        '
-        ''We used ChildWindowCopy_CreateList to reverse the direction
-        'AssertEqual(10, ResultList.Count)
-        'AssertEqual("Path=\deldir Action=Copy Side=Right Type=Folder IsUpdate=None", ResultList(0).ToStringWithoutRealId)
-        'AssertEqual("Path=\deldir\fileindeldir1.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(1).ToStringWithoutRealId)
-        'AssertEqual("Path=\deldir\fileindeldir2.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(2).ToStringWithoutRealId)
-        'AssertEqual("Path=\newdir Action=Delete Side=Left Type=Folder IsUpdate=None", ResultList(3).ToStringWithoutRealId)
-        'AssertEqual("Path=\newdir\fileinnewdir1.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(4).ToStringWithoutRealId)
-        'AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(5).ToStringWithoutRealId)
-        'AssertEqual("Path=\newfile.txt Action=Delete Side=Left Type=File IsUpdate=None", ResultList(6).ToStringWithoutRealId)
-        'AssertEqual("Path=\oldfile.txt Action=Copy Side=Right Type=File IsUpdate=None", ResultList(7).ToStringWithoutRealId)
-        'AssertEqual("Path=\updatedbetter.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithNewerFile", ResultList(8).ToStringWithoutRealId)
-        'AssertEqual("Path=\updatedworse.txt Action=Copy Side=Right Type=File IsUpdate=ReplaceWithOlderFile", ResultList(9).ToStringWithoutRealId)
-        '
-        ''Should be no items left in the list
-        'AssertEqual(0, TestForm.SyncingList.Count)
+        'OK to copy a file to where the parent isn't there yet
+        AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Copy Side=Left Type=File IsUpdate=None", TestForm.SyncingList(3).ToStringWithoutRealId)
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {3})
+        AssertEqual(False, IO.Directory.Exists(Dir & "\dest\d1\newdir"))
+        If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Close', in the next dialog.")
+        ResultList = TestForm.ChildWindowCopy(True, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Start))
+        AssertEqual(1, ResultList.Count)
+        AssertEqual("Path=\newdir\fileinnewdir2.txt Action=Copy Side=Left Type=File IsUpdate=None", ResultList(0).ToStringWithoutRealId)
+        AssertEqual(7, TestForm.SyncingList.Count)
+        AssertEqual(ListWorkPrev(1).ToStringWithoutRealId, TestForm.SyncingList(0).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(3).ToStringWithoutRealId, TestForm.SyncingList(1).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(4).ToStringWithoutRealId, TestForm.SyncingList(2).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(6).ToStringWithoutRealId, TestForm.SyncingList(3).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(7).ToStringWithoutRealId, TestForm.SyncingList(4).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(8).ToStringWithoutRealId, TestForm.SyncingList(5).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(9).ToStringWithoutRealId, TestForm.SyncingList(6).ToStringWithoutRealId)
+        Expected = "dest\d1\newdir\fileinnewdir2.txt=abc2|dest\d1\oldfile.txt=oldfile|dest\d1\samedir\fileinsamedir.txt=a0|dest\d1\samefile.txt=abc|dest\d1\updatedbetter.txt=abc|dest\d1\updatedworse.txt=xyz123|src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\newdir|dest\d1\samedir|src|src\d1|src\d1\newdir|src\d1\samedir|"
+        AssertEqual(Expected, DirectoryFileContentsToString(Dir))
+
+        'OK to copy a directory to where the parent isn't there yet
+        AssertEqual("Path=\newdir Action=Copy Side=Left Type=Folder IsUpdate=None", TestForm.SyncingList(1).ToStringWithoutRealId)
+        TestUtil_SetSelection(TestForm.PreviewList, New Int32() {1})
+        IO.Directory.Delete(Dir & "\dest\d1", True)
+        AssertEqual(False, IO.Directory.Exists(Dir & "\dest\d1"))
+        If ShowUi Then Interaction.ShowMsg("Please click 'Synchronize', and then when complete, click 'Close', in the next dialog.")
+        ResultList = TestForm.ChildWindowCopy(True, If(ShowUi, StartWithoutAsking.None, StartWithoutAsking.Start))
+        AssertEqual(1, ResultList.Count)
+        AssertEqual("Path=\newdir Action=Copy Side=Left Type=Folder IsUpdate=None", ResultList(0).ToStringWithoutRealId)
+        AssertEqual(6, TestForm.SyncingList.Count)
+        AssertEqual(ListWorkPrev(1).ToStringWithoutRealId, TestForm.SyncingList(0).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(4).ToStringWithoutRealId, TestForm.SyncingList(1).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(6).ToStringWithoutRealId, TestForm.SyncingList(2).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(7).ToStringWithoutRealId, TestForm.SyncingList(3).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(8).ToStringWithoutRealId, TestForm.SyncingList(4).ToStringWithoutRealId)
+        AssertEqual(ListWorkPrev(9).ToStringWithoutRealId, TestForm.SyncingList(5).ToStringWithoutRealId)
+        Expected = "src\d1\newdir\fileinnewdir1.txt=abc1|src\d1\newdir\fileinnewdir2.txt=abc2|src\d1\newfile.txt=newfile|src\d1\samedir\fileinsamedir.txt=a0|src\d1\samefile.txt=abc|src\d1\updatedbetter.txt=abc12345|src\d1\updatedworse.txt=xyz|{dirs:}dest|dest\d1|dest\d1\newdir|src|src\d1|src\d1\newdir|src\d1\samedir|"
+        AssertEqual(Expected, DirectoryFileContentsToString(Dir))
+    End Sub
+
+
+
+    Private Shared Sub Test_AddAllParents()
+        Dim Dict As New Dictionary(Of String, Boolean)
+        UpdateSyncingList_AddAllParents(Dict, "C:\abc\def\ghi.txt")
+        AssertEqual(3, Dict.Count)
+        AssertEqual(True, Dict.ContainsKey("C:\abc\def"))
+        AssertEqual(True, Dict.ContainsKey("C:\abc"))
+        AssertEqual(True, Dict.ContainsKey("C:\"))
+        Dict.Clear()
+        UpdateSyncingList_AddAllParents(Dict, "C:\abc")
+        AssertEqual(1, Dict.Count)
+        AssertEqual(True, Dict.ContainsKey("C:\"))
+        Dict.Clear()
+        UpdateSyncingList_AddAllParents(Dict, "C:\")
+        AssertEqual(0, Dict.Count)
+        UpdateSyncingList_AddAllParents(Dict, "\\abc\def\ghi\z.txt")
+        AssertEqual(2, Dict.Count)
+        AssertEqual(True, Dict.ContainsKey("\\abc\def\ghi"))
+        AssertEqual(True, Dict.ContainsKey("\\abc\def"))
+        Dict.Clear()
+        UpdateSyncingList_AddAllParents(Dict, "\\abc")
+        AssertEqual(0, Dict.Count)
+        Dict.Clear()
+        UpdateSyncingList_AddAllParents(Dict, "\\")
+        AssertEqual(0, Dict.Count)
+        Dict.Clear()
     End Sub
 
     Private Shared Sub Test_LastModifiedTimeTests(ConfigPath As String, TempDir As String, ShowUi As Boolean)
