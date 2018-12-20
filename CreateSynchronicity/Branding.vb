@@ -9,7 +9,7 @@
 Friend Module Branding
     Public Const Brand As String = "Create Software"
     Public Const Name As String = "Create Synchronicity"
-    Public Const Web As String = "http://synchronicity.sourceforge.net/"
+    Public Const Web As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
     Public Const CompanyWeb As String = "http://createsoftware.users.sourceforge.net/"
     Public Const Support As String = "mailto:createsoftware@users.sourceforge.net"
     Public Const License As String = "http://www.gnu.org/licenses/gpl.html"

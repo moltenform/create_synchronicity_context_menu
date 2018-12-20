@@ -21,13 +21,22 @@ Friend Class AboutForm
     Private Sub About_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         Translation.TranslateControl(Me)
         VersionInfo.Text = String.Format(VersionInfo.Text, String.Format("{0} (r{1})", Application.ProductVersion.TrimEnd(".0".ToCharArray), Revision.Build))
-
-        SetLinkArea(BugReport)
-        SetLinkArea(ContactLink)
-        SetLinkArea(LinkToLicense)
         SetLinkArea(LinkToProductPage)
+        SetLinkArea(ContactLink)
+        SetLinkArea(BugReport)
+        SetLinkArea(LinkToLicense)
         SetLinkArea(LinkToWebsite)
         SetLinkArea(VersionInfo)
+
+        If Not Updates.AreAutoUpdatesSupported() Then
+            BugReport.Visible = False
+            LinkToLicense.Visible = False
+            ContactLink.Visible = False
+            VersionInfo.Links.Clear()
+            LinkToWebsite.Links.Clear()
+            Me.UpdatesOption.Visible = False
+            VersionInfo.Text = "(Context menu added by moltenjs, v1)"
+        End If
 
         ProgramConfig.LoadProgramSettings()
         LanguageHandler.FillLanguagesComboBox(LanguagesList)

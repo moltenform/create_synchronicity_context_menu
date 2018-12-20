@@ -7,9 +7,18 @@
 'Web site:		http://synchronicity.sourceforge.net.
 
 Friend Module Updates
+    Public Function AreAutoUpdatesSupported() As Boolean
+        Return False
+    End Function
+
     Public Sub CheckForUpdates(Optional ByVal RoutineCheck As Boolean = True)
         Dim LatestVersion As String = ""
         Dim UpdateClient As New Net.WebClient
+
+        If Not AreAutoUpdatesSupported() Then
+            ProgramConfig.LogDebugEvent("Automatic updates aren't supported in the with-context-menu fork.")
+            Exit Sub
+        End If
 
         Try
             'Headers
