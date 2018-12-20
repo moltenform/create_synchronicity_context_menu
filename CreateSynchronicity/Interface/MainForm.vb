@@ -184,6 +184,10 @@ Friend Class MainForm
 
         'Forbid syncing without at least one preview, at least in non-expert mode
         SynchronizeMenuItem.Visible = ProgramConfig.GetProgramSetting(Of Boolean)(ProgramSetting.ExpertMode, False) OrElse Profiles(CurrentProfile).GetLastRun() <> ScheduleInfo.DATE_NEVER
+
+        'In fact, let's always hide the menuitem, I don't think it's a good idea to sync without a preview
+        SynchronizeMenuItem.Visible = False
+        PreviewMenuItem.Image = SynchronizeMenuItem.Image
     End Sub
 
     Private Sub PreviewMenuItem_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles PreviewMenuItem.Click
