@@ -111,7 +111,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CreateSynchronicity\Create Synchronicity.vbproj">
+    <ProjectReference Include="..\..\Create Synchronicity.vbproj">
       <Project>{7E32DD30-2788-4A93-A35F-2229CCC3D6C9}</Project>
       <Name>Create Synchronicity</Name>
     </ProjectReference>
@@ -121,8 +121,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(SolutionDir)CreateSynchronicity\bin\$(ConfigurationName)\ICSharpCode.SharpZipLib.dll" &gt; output.txt
-copy "$(TargetPath)" "$(SolutionDir)CreateSynchronicity\bin\$(ConfigurationName)\$(TargetFileName)" &gt;&gt; output.txt</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(SolutionDir)bin\$(ConfigurationName)\ICSharpCode.SharpZipLib.dll" &gt; output.txt
+copy "$(TargetPath)" "$(SolutionDir)bin\$(ConfigurationName)\$(TargetFileName)" &gt;&gt; output.txt</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
