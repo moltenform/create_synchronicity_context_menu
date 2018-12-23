@@ -7,11 +7,12 @@
 #Web site:		http://synchronicity.sourceforge.net.
 
 !include MUI2.nsh
-!define	/file	VERSION		"..\..\..\..\..\..\Sites Web\Sourceforge\Synchronicity\code\version-string.txt"
+!define	/file	VERSION		"version-string.txt"
 
-!define 		COMPANY		"Create Software"
-!define 		PRODUCTNAME	"Create Synchronicity"
-!define			BINARYNAME  "${PRODUCTNAME}.exe"
+#Change the company name to ensure no conflict with mainline Create Synchronicity
+!define 		COMPANY		"Create Software (With-Context-Menu)"
+!define 		PRODUCTNAME	"Create Synchronicity (With-Context-Menu)"
+!define			BINARYNAME  "Create Synchronicity.exe"
 
 !define 		REGPATH		"Software\${COMPANY}"
 !define 		SUBREGPATH	"${REGPATH}\${PRODUCTNAME}"
@@ -108,10 +109,10 @@ Section "Installer Section" InstallSection
 
 	!insertmacro MUI_STARTMENU_WRITE_BEGIN AppStartMenu
 	CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCTNAME}.exe"
+	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${BINARYNAME}"
 	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 	!insertmacro MUI_STARTMENU_WRITE_END
-
+	
 	WriteRegStr HKLM "${SUBREGPATH}" "InstallPath" $INSTDIR
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
@@ -136,9 +137,9 @@ Section "Uninstall"
 	RMDir "$INSTDIR\"
 	RMDir "${COMPANYPATH}\" #remove the "Create Software" folder if empty
 
-	RMDir /r "$APPDATA\${COMPANY}\Create Synchronicity\"
+	RMDir /r "$APPDATA\${COMPANY}\${PRODUCTNAME}\"
 	RMDir "$APPDATA\${COMPANY}\" #remove the "Create Software" folder if empty
-
+	
 	DeleteRegKey HKLM "${SUBREGPATH}"
 	DeleteRegKey /ifempty HKLM "${REGPATH}" #remove the "Create Software" key if empty
 SectionEnd

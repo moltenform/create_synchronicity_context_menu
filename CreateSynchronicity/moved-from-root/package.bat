@@ -1,4 +1,7 @@
 @echo OFF
+@echo This script hasn't yet been updated to work for "with-context-menu"
+goto end
+
 @if "%1" == "/?" goto help
 
 :start
