@@ -117,6 +117,22 @@ Section "Installer Section" InstallSection
 	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 	!insertmacro MUI_STARTMENU_WRITE_END
 	
+	# add to 'programs and features'
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}" \
+                 "DisplayName" "Create Synchronicity (With-Context-Menu)"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}" \
+                 "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}" \
+                 "DisplayIcon" "$\"$INSTDIR\${BINARYNAME}$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}" \
+                 "Publisher" "${COMPANY}"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}" \
+                 "InstallLocation" "$\"$INSTDIR$\""
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}" \
+                 "NoModify" 1
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}" \
+                 "NoRepair" 1
+
 	WriteRegStr HKLM "${SUBREGPATH}" "InstallPath" $INSTDIR
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
@@ -144,6 +160,9 @@ Section "Uninstall"
 	RMDir /r "$APPDATA\${COMPANY}\${PRODUCTNAME}\"
 	RMDir "$APPDATA\${COMPANY}\" #remove the "Create Software" folder if empty
 	
+	# remove from 'programs and features'
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY}"
+
 	DeleteRegKey HKLM "${SUBREGPATH}"
 	DeleteRegKey /ifempty HKLM "${REGPATH}" #remove the "Create Software" key if empty
 SectionEnd
