@@ -86,14 +86,18 @@ Var StartMenuFolder
 	OkCase:
 !macroend
 
+#According to the website
+#https://nsis.sourceforge.io/FindProcDLL_plug-in
+#As of NSIS 2.46 the FindProcDLL plugin no longer works...
+
 Function .onInit
 	!insertmacro MUI_LANGDLL_DISPLAY
-	!insertmacro ExitIfRunning
+#!insertmacro ExitIfRunning
 FunctionEnd
 
 Function un.onInit
 	!insertmacro MUI_UNGETLANGUAGE
-	!insertmacro ExitIfRunning
+#!insertmacro ExitIfRunning
 FunctionEnd
 
 Section "Installer Section" InstallSection
