@@ -188,9 +188,11 @@ Friend NotInheritable Class MessageLoop
             Translation = LanguageHandler.GetSingleton(True)
         End If
 
-        If Not ProgramConfig.ProgramSettingsSet(ProgramSetting.AutoUpdates) Then
-            Dim AutoUpdates As Boolean = If(Interaction.ShowMsg(Translation.Translate("\WELCOME_MSG"), Translation.Translate("\FIRST_RUN"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes, True, False)
-            ProgramConfig.SetProgramSetting(Of Boolean)(ProgramSetting.AutoUpdates, AutoUpdates)
+        If Updates.AreAutoUpdatesSupported() Then
+            If Not ProgramConfig.ProgramSettingsSet(ProgramSetting.AutoUpdates) Then
+                Dim AutoUpdates As Boolean = If(Interaction.ShowMsg(Translation.Translate("\WELCOME_MSG"), Translation.Translate("\FIRST_RUN"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes, True, False)
+                ProgramConfig.SetProgramSetting(Of Boolean)(ProgramSetting.AutoUpdates, AutoUpdates)
+            End If
         End If
 
         ProgramConfig.SaveProgramSettings()
