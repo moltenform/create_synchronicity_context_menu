@@ -20,7 +20,7 @@ Friend Module Branding
     Public Const UpdatesSchedulerUrl As String = Branding.Web & "code/scheduler-version.txt"
     Public Const UpdatesFallbackUrl As String = Branding.CompanyWeb & "code/synchronicity-version.txt"
 
-    Public Const Help As String = Branding.Web & "help.html"
-    Public Const SettingsHelp As String = Branding.Web & "settings-help.html"
-    Public Const Contribute As String = Branding.Web & "contribute.html"
+    Public Const Help As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
+    Public Const SettingsHelp As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
+    Public Const Contribute As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
 End Module
