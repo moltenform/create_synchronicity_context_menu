@@ -13,5 +13,4 @@ Read more:
 
 home | [overview](https://moltenjs.com/page/create-sync/doc/overview.html) | [context menu](https://moltenjs.com/page/create-sync/doc/context-menu.html) | [partial sync](https://moltenjs.com/page/create-sync/doc/partial-sync.html) | [advanced](https://moltenjs.com/page/create-sync/doc/advanced.html)
 
-![Screenshot](https://moltenjs.com/page/create-sync/doc/img/home.png)
-
+<a href="#">![Screenshot](https://moltenjs.com/page/create-sync/doc/img/home.png)</a>
