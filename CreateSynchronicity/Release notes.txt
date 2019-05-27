@@ -43,14 +43,14 @@ Requires:          .Net Framework v2
 
 * Contact
 Website:           http://synchronicity.sourceforge.net
-Website (Context menu feature): https://github.com/moltenjs/create_synchronicity_context_menu   
+Website (Context menu feature): https://github.com/moltenform/create_synchronicity_context_menu   
 Contact:           createsoftware@users.sourceforge.net
 SVN Server:        https://synchronicity.svn.sourceforge.net/svnroot/synchronicity
 
 * Change Log
 NEW: New feature; FIX: Bug fixed; UPD: Update/Improvement; !: Important modification, SYN: Synopsis 
 --------------------------
-Dec 14, 2018 - NEW: Context menu added by moltenjs, v1, see https://github.com/moltenjs/create_synchronicity_context_menu for more info
+Dec 14, 2018 - NEW: Context menu added by moltenform, v1, see https://github.com/moltenform/create_synchronicity_context_menu for more info
 --- In future releases --- 
 Oct. 28, 2012 - UPD: Folders excluded using regular expressions are now grayed-out in folder tree views.
 Oct. 27, 2012 - FIX: Enabling look-backwards date filters forced replication empty directories, even if it was manually disabled.

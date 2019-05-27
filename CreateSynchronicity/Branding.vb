@@ -9,7 +9,7 @@
 Friend Module Branding
     Public Const Brand As String = "Create Software"
     Public Const Name As String = "Create Synchronicity"
-    Public Const Web As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
+    Public Const Web As String = "https://github.com/moltenform/create_synchronicity_context_menu"
     Public Const CompanyWeb As String = "http://createsoftware.users.sourceforge.net/"
     Public Const Support As String = "mailto:createsoftware@users.sourceforge.net"
     Public Const License As String = "http://www.gnu.org/licenses/gpl.html"
@@ -20,7 +20,7 @@ Friend Module Branding
     Public Const UpdatesSchedulerUrl As String = Branding.Web & "code/scheduler-version.txt"
     Public Const UpdatesFallbackUrl As String = Branding.CompanyWeb & "code/synchronicity-version.txt"
 
-    Public Const Help As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
-    Public Const SettingsHelp As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
-    Public Const Contribute As String = "https://github.com/moltenjs/create_synchronicity_context_menu"
+    Public Const Help As String = "https://github.com/moltenform/create_synchronicity_context_menu"
+    Public Const SettingsHelp As String = "https://github.com/moltenform/create_synchronicity_context_menu"
+    Public Const Contribute As String = "https://github.com/moltenform/create_synchronicity_context_menu"
 End Module

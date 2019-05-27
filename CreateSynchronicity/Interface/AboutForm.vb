@@ -35,7 +35,7 @@ Friend Class AboutForm
             VersionInfo.Links.Clear()
             LinkToWebsite.Links.Clear()
             Me.UpdatesOption.Visible = False
-            VersionInfo.Text = "(Context menu added by moltenjs, v1)"
+            VersionInfo.Text = "(Context menu added by moltenform, v1)"
         End If
 
         ProgramConfig.LoadProgramSettings()

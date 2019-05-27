@@ -23,7 +23,7 @@ Module Main
             If Not MsgLoop.ExitNeeded Then Application.Run(MsgLoop)
 
         Catch Ex As Exception
-            MessageBox.Show("A critical error has occured. " & Environment.NewLine & "Details:" & Environment.NewLine & Environment.NewLine & Ex.ToString & Environment.NewLine & Environment.NewLine & "You can copy this message using Ctrl+C and mention it at https://github.com/moltenjs/create_synchronicity_context_menu." & Environment.NewLine, "Critical error")
+            MessageBox.Show("A critical error has occured. " & Environment.NewLine & "Details:" & Environment.NewLine & Environment.NewLine & Ex.ToString & Environment.NewLine & Environment.NewLine & "You can copy this message using Ctrl+C and mention it at https://github.com/moltenform/create_synchronicity_context_menu." & Environment.NewLine, "Critical error")
         End Try
     End Sub
 End Module
